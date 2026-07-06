@@ -3,6 +3,11 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.2.1
+- CI: full auto-deploy on push to `main` (Firebase Hosting + Firestore rules)
+  via the Firebase CLI + a `FIREBASE_SERVICE_ACCOUNT` repo secret — no local
+  build/deploy commands needed.
+
 ## 1.2.0
 - Redesigned **My Account** as a tabbed area: **Dashboard** (activity summary,
   quick actions, your interests), **Account** (name, phone, mailing address,

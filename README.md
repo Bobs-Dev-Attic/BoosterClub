@@ -143,8 +143,18 @@ flutter test
 flutter build web --release
 ```
 
-## ⚙️ Continuous deployment
+## ⚙️ Continuous deployment (no local commands)
 
-`.github/workflows/deploy.yml` builds the web app and deploys to Firebase Hosting on push
-to the default branch. Add a `FIREBASE_SERVICE_ACCOUNT` repo secret (a Firebase service
-account JSON) and set your project id to enable it.
+`.github/workflows/deploy.yml` builds, tests, and **auto-deploys** to Firebase (Hosting +
+Firestore rules) on every push to `main`. Once set up, you never run `flutter build` /
+`firebase deploy` by hand — merging a change ships it.
+
+**One-time setup — add a single repo secret:**
+1. Firebase console → **Project settings → Service accounts → Generate new private key**
+   (downloads a JSON key).
+2. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**,
+   name it **`FIREBASE_SERVICE_ACCOUNT`**, and paste the entire JSON as the value.
+
+That's it. The project id (`boosterclub-bda`) is already set in the workflow. To also deploy
+Cloud Functions (QR sign-in), add `,functions` to the deploy step once the project is on the
+Blaze plan.
