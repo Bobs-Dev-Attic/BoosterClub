@@ -11,7 +11,7 @@ class AppConfig {
 
   /// App version, shown in the nav footer. Bump this on each iteration (kept in
   /// step with the version in pubspec.yaml and CHANGELOG.md).
-  static const String appVersion = '1.2.1';
+  static const String appVersion = '1.2.2';
 
   /// When true, the app runs against seeded in-memory data instead of Firebase.
   /// This is automatically enabled when [DefaultFirebaseOptions] still contains

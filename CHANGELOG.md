@@ -3,6 +3,12 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.2.2
+- CI fix: the v1.2.1 deploy failed because the service account can't deploy
+  Firestore rules (403 on serviceusage). Reverted CI to Hosting-only auto-deploy
+  (proven working). Rules/functions deploy from CI needs extra IAM roles and can
+  be run manually meanwhile.
+
 ## 1.2.1
 - CI: full auto-deploy on push to `main` (Firebase Hosting + Firestore rules)
   via the Firebase CLI + a `FIREBASE_SERVICE_ACCOUNT` repo secret — no local
