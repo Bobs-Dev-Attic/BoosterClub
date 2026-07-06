@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_theme.dart';
 import 'nav_destinations.dart';
 
 /// App shell providing responsive navigation:
@@ -380,21 +381,26 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF102A54), Color(0xFF1E4A8C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      child: Image.asset(
+        'assets/images/wj_logo.png',
+        fit: BoxFit.contain,
+        // Graceful fallback (e.g. before the official crest is added): a green
+        // rounded badge with a wildcat paw.
+        errorBuilder: (context, error, stack) => Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.green, AppTheme.greenDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(size * 0.28),
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.pets, size: size * 0.55, color: Colors.white),
         ),
-        borderRadius: BorderRadius.circular(size * 0.28),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '🦁',
-        style: TextStyle(fontSize: size * 0.55),
       ),
     );
   }

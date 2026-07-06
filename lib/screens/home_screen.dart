@@ -117,7 +117,7 @@ class _Hero extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [AppTheme.navy, Color(0xFF1E4A8C)],
+          colors: [AppTheme.green, Color(0xFF0AA64F)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -126,10 +126,10 @@ class _Hero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Pill('${AppConfig.schoolName} Booster Club',
-              color: AppTheme.gold, icon: Icons.star),
+              color: Colors.white, icon: Icons.star),
           const SizedBox(height: 16),
           Text(
-            'Go Lions! 🦁',
+            'Go ${AppConfig.mascot}! 🐾',
             style: displayFont(context, size: wide ? 44 : 32, color: Colors.white),
           ),
           const SizedBox(height: 12),
@@ -152,8 +152,8 @@ class _Hero extends StatelessWidget {
             children: [
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.gold,
-                  foregroundColor: AppTheme.navy,
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppTheme.green,
                 ),
                 onPressed: () => context.go('/donate'),
                 icon: const Icon(Icons.favorite),

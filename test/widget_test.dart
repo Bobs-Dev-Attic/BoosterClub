@@ -10,7 +10,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // The home hero greets with the school spirit line.
-    expect(find.textContaining('Go Lions'), findsOneWidget);
+    expect(find.textContaining('Go ${AppConfig.mascot}'), findsOneWidget);
     // Navigation is present.
     expect(find.text('Events'), findsWidgets);
   });
