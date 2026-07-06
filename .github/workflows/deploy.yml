@@ -29,18 +29,16 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: build/web
-
   deploy:
-    # Deploys to Firebase Hosting on pushes to main.
-    # Requires a FIREBASE_SERVICE_ACCOUNT secret and your project id below.
+    # Auto-deploys to Firebase on every push to main — no local commands needed.
+    # One-time setup: add a repo secret named FIREBASE_SERVICE_ACCOUNT containing
+    # a Firebase service-account JSON key (Firebase console → Project settings →
+    # Service accounts → Generate new private key).
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT: boosterclub-bda
     steps:
       - uses: actions/checkout@v4
 
@@ -49,13 +47,26 @@ jobs:
           flutter-version: '3.44.4'
           channel: stable
 
-      - run: flutter pub get
-      - run: flutter build web --release
+      - name: Build web
+        run: |
+          flutter pub get
+          flutter build web --release
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: actions/setup-node@v4
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: boosterclub-bda
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Write service account credentials
+        run: |
+          cat > "$RUNNER_TEMP/firebase-sa.json" <<'JSON'
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          JSON
+
+      - name: Deploy hosting + Firestore rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+        # Add ",functions" below once the project is on the Blaze plan.
+        run: firebase deploy --only hosting,firestore:rules --project "$FIREBASE_PROJECT" --non-interactive
