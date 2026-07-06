@@ -116,4 +116,31 @@ class FirestoreService {
   /// Records a submitted funding request (available to members).
   Future<void> submitFundingRequest(FundingRequest req) =>
       upsert('funding_requests', req);
+
+  /// Writes the bundled sample content into every collection. Used by admins
+  /// to populate a fresh database. Idempotent: documents keep their demo IDs so
+  /// re-running overwrites rather than duplicating.
+  Future<void> seedSampleData() async {
+    for (final e in DemoData.events()) {
+      await upsert('events', e);
+    }
+    for (final o in DemoData.volunteering()) {
+      await upsert('volunteering', o);
+    }
+    for (final s in DemoData.sponsorships()) {
+      await upsert('sponsorships', s);
+    }
+    for (final r in DemoData.fundingRequests()) {
+      await upsert('funding_requests', r);
+    }
+    for (final f in DemoData.fundraisers()) {
+      await upsert('fundraisers', f);
+    }
+    for (final m in DemoData.meetings()) {
+      await upsert('meetings', m);
+    }
+    for (final q in DemoData.faqs()) {
+      await upsert('faqs', q);
+    }
+  }
 }

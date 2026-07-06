@@ -37,6 +37,22 @@ class AuthProvider extends ChangeNotifier {
   Future<AuthResult> sendSignInLink(String email, String continueUrl) =>
       _service.sendSignInLink(email, continueUrl);
 
+  bool isSignInLink(String link) => _service.isSignInLink(link);
+
+  Future<String?> savedEmailForSignIn() => _service.savedEmailForSignIn();
+
+  Future<AuthResult> completeSignInWithLink(String email, String link) =>
+      _service.completeSignInWithLink(email, link);
+
+  // QR pairing
+  Future<String> createQrSession() => _service.createQrSession();
+
+  Stream<Map<String, dynamic>?> watchQrSession(String id) =>
+      _service.watchQrSession(id);
+
+  Future<AuthResult> approveQrSession(String id) =>
+      _service.approveQrSession(id);
+
   Future<AuthResult> sendPasswordReset(String email) =>
       _service.sendPasswordReset(email);
 
@@ -44,8 +60,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<AuthResult> signInWithFacebook() => _service.signInWithFacebook();
 
-  Future<AuthResult> signInWithQrToken(String token) =>
-      _service.signInWithQrToken(token);
+  Future<AuthResult> signInWithQrToken(String token, {String? sessionId}) =>
+      _service.signInWithQrToken(token, sessionId: sessionId);
 
   Future<void> updateProfile(AppUser user) async {
     await _service.updateProfile(user);

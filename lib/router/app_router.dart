@@ -5,11 +5,13 @@ import '../screens/admin/admin_screen.dart';
 import '../screens/donate_screen.dart';
 import '../screens/events_screen.dart';
 import '../screens/faq_screen.dart';
+import '../screens/finish_signin_screen.dart';
 import '../screens/funding_screen.dart';
 import '../screens/fundraisers_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/meetings_screen.dart';
+import '../screens/pair_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/qr_login_screen.dart';
 import '../screens/sponsorships_screen.dart';
@@ -24,12 +26,28 @@ CustomTransitionPage _page(Widget child) => CustomTransitionPage(
     );
 
 GoRouter buildRouter() {
+  // If the app was opened via a passwordless email sign-in link, the Firebase
+  // parameters arrive as query params on the launch URL — start on the finish
+  // screen so we can complete sign-in.
+  final base = Uri.base;
+  final isEmailLink = base.queryParameters['mode'] == 'signIn' &&
+      base.queryParameters.containsKey('oobCode');
+
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: isEmailLink ? '/finishSignIn' : '/',
     routes: [
       // Auth routes render full-screen (no app shell).
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/login/qr', builder: (_, __) => const QrLoginScreen()),
+      GoRoute(
+          path: '/finishSignIn',
+          builder: (_, __) => const FinishSignInScreen()),
+      GoRoute(
+        path: '/pair',
+        builder: (context, state) => PairScreen(
+          sessionId: state.uri.queryParameters['s'] ?? '',
+        ),
+      ),
 
       // All other routes live inside the responsive shell.
       ShellRoute(

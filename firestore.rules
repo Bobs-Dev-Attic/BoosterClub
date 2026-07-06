@@ -58,6 +58,21 @@ service cloud.firestore {
       allow update, delete: if canManageContent();
     }
 
+    // ---- QR sign-in pairing sessions ----------------------------------
+    // Created (unauthenticated) by the device that wants to sign in; read by
+    // that same device while it polls for approval; approved only by the
+    // `approveQrSignIn` Cloud Function (Admin SDK, which bypasses these rules).
+    // The document id is an unguessable bearer secret and sessions are short
+    // lived, so client updates are forbidden and only creation of a bare
+    // pending session is allowed.
+    match /qr_sessions/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['status', 'createdAt'])
+        && request.resource.data.status == 'pending';
+      allow get: if true;
+      allow delete: if true;
+      allow update: if false;
+    }
+
     // ---- Volunteer sign-ups (per user) --------------------------------
     match /signups/{doc} {
       allow read: if canManageContent()
