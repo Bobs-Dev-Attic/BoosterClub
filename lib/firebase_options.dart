@@ -38,8 +38,8 @@ class DefaultFirebaseOptions {
   static const String _senderId = '595475479160';
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: _placeholder,
-    appId: _placeholder,
+    apiKey: 'AIzaSyC4ZCtn2k9aausoQUlfwsnvxH77ySD7E6E',
+    appId: '1:595475479160:web:ca64684dc289a489394b8d',
     messagingSenderId: _senderId,
     projectId: _projectId,
     authDomain: '$_projectId.firebaseapp.com',
