@@ -42,6 +42,7 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = event.startsAt;
+    final end = event.endsAt;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -60,10 +61,10 @@ class _EventTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Wrap(
                     spacing: 12,
+                    runSpacing: 4,
                     children: [
                       if (d != null)
-                        _meta(context, Icons.schedule,
-                            DateFormat('h:mm a').format(d)),
+                        _meta(context, Icons.schedule, _timeRange(d, end)),
                       if (event.location.isNotEmpty)
                         _meta(context, Icons.place, event.location),
                     ],
@@ -78,6 +79,19 @@ class _EventTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Formats a start–end range: same day → "6:00 PM – 8:00 PM";
+  /// different days → "Jul 26, 6:00 PM – Jul 27, 9:00 AM".
+  String _timeRange(DateTime start, DateTime? end) {
+    final t = DateFormat('h:mm a');
+    if (end == null) return t.format(start);
+    final sameDay = start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+    if (sameDay) return '${t.format(start)} – ${t.format(end)}';
+    final dt = DateFormat('MMM d, h:mm a');
+    return '${t.format(start)} – ${dt.format(end)}';
   }
 
   Widget _meta(BuildContext context, IconData icon, String text) => Row(

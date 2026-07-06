@@ -74,6 +74,127 @@ class _DateFieldState extends State<_DateField> {
   }
 }
 
+/// Time-of-day options in 30-minute steps, 12-hour format with AM/PM.
+class _TimeSlot {
+  final int minutes; // minutes since midnight
+  final String label;
+  const _TimeSlot(this.minutes, this.label);
+}
+
+List<_TimeSlot> _buildTimeSlots() {
+  final slots = <_TimeSlot>[];
+  for (var m = 0; m < 24 * 60; m += 30) {
+    final h = m ~/ 60;
+    final min = m % 60;
+    final h12 = h % 12 == 0 ? 12 : h % 12;
+    final ampm = h < 12 ? 'AM' : 'PM';
+    slots.add(_TimeSlot(m, '$h12:${min == 0 ? '00' : '30'} $ampm'));
+  }
+  return slots;
+}
+
+final List<_TimeSlot> _kTimeSlots = _buildTimeSlots();
+
+int _roundToSlot(DateTime d) {
+  final total = d.hour * 60 + d.minute;
+  return ((total / 30).round() * 30) % (24 * 60);
+}
+
+/// A combined date + 30-minute time-of-day picker. Emits a single [DateTime]
+/// (or null when no date is chosen).
+class _DateTimePicker extends StatefulWidget {
+  final String label;
+  final DateTime? initial;
+  final ValueChanged<DateTime?> onChanged;
+  const _DateTimePicker(
+      {required this.label, this.initial, required this.onChanged});
+
+  @override
+  State<_DateTimePicker> createState() => _DateTimePickerState();
+}
+
+class _DateTimePickerState extends State<_DateTimePicker> {
+  DateTime? _date; // date-only
+  int _minutes = 18 * 60; // default 6:00 PM
+
+  @override
+  void initState() {
+    super.initState();
+    final i = widget.initial;
+    if (i != null) {
+      _date = DateTime(i.year, i.month, i.day);
+      _minutes = _roundToSlot(i);
+    }
+  }
+
+  void _emit() {
+    if (_date == null) {
+      widget.onChanged(null);
+    } else {
+      widget.onChanged(DateTime(
+          _date!.year, _date!.month, _date!.day, _minutes ~/ 60, _minutes % 60));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _date ?? DateTime(2026, 7, 6),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2035),
+              );
+              if (picked != null) {
+                setState(() => _date = picked);
+                _emit();
+              }
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: widget.label,
+                prefixIcon: const Icon(Icons.calendar_today, size: 18),
+              ),
+              child: Text(
+                _date != null
+                    ? DateFormat('EEE, MMM d, yyyy').format(_date!)
+                    : 'Select a date',
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: DropdownButtonFormField<int>(
+            initialValue: _minutes,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Time',
+              prefixIcon: Icon(Icons.schedule, size: 18),
+            ),
+            items: [
+              for (final s in _kTimeSlots)
+                DropdownMenuItem(value: s.minutes, child: Text(s.label)),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _minutes = v);
+              _emit();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
 Widget _actions(GlobalKey<FormState> key, VoidCallback onSave) => Padding(
@@ -99,42 +220,73 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
   final title = TextEditingController(text: e?.title);
   final desc = TextEditingController(text: e?.description);
   final loc = TextEditingController(text: e?.location);
-  DateTime? date = e?.startsAt;
+  DateTime? start = e?.startsAt;
+  DateTime? end = e?.endsAt;
   return _formDialog<SchoolEvent>(
     context,
     title: e == null ? 'New Event' : 'Edit Event',
-    build: (key, submit) => Form(
-      key: key,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextFormField(
-              controller: title,
-              decoration: _dec('Title'),
-              validator: _required),
-          const SizedBox(height: 12),
-          _DateField(
-              label: 'Date', initial: date, onChanged: (v) => date = v),
-          const SizedBox(height: 12),
-          TextFormField(controller: loc, decoration: _dec('Location')),
-          const SizedBox(height: 12),
-          TextFormField(
-              controller: desc,
-              decoration: _dec('Description'),
-              maxLines: 3,
-              validator: _required),
-          _actions(
-            key,
-            () => submit(SchoolEvent(
-              id: e?.id ?? 'new',
-              title: title.text.trim(),
-              description: desc.text.trim(),
-              location: loc.text.trim(),
-              startsAt: date,
-            )),
+    build: (key, submit) => StatefulBuilder(
+      builder: (context, setLocal) {
+        String? error;
+        void trySubmit() {
+          if (!(key.currentState?.validate() ?? true)) return;
+          if (start != null && end != null && end!.isBefore(start!)) {
+            setLocal(() => error = 'End must be after the start.');
+            return;
+          }
+          submit(SchoolEvent(
+            id: e?.id ?? 'new',
+            title: title.text.trim(),
+            description: desc.text.trim(),
+            location: loc.text.trim(),
+            startsAt: start,
+            endsAt: end,
+          ));
+        }
+
+        return Form(
+          key: key,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                  controller: title,
+                  decoration: _dec('Title'),
+                  validator: _required),
+              const SizedBox(height: 12),
+              _DateTimePicker(
+                  label: 'Start Date',
+                  initial: start,
+                  onChanged: (v) => start = v),
+              const SizedBox(height: 12),
+              _DateTimePicker(
+                  label: 'End Date', initial: end, onChanged: (v) => end = v),
+              const SizedBox(height: 12),
+              TextFormField(controller: loc, decoration: _dec('Location')),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: desc,
+                  decoration: _dec('Description'),
+                  maxLines: 3,
+                  validator: _required),
+              if (error != null) ...[
+                const SizedBox(height: 12),
+                Text(error!, style: const TextStyle(color: Colors.red)),
+              ],
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FilledButton(
+                        onPressed: trySubmit, child: const Text('Save')),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     ),
   );
 }
