@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../screens/account/account_screen.dart';
 import '../screens/admin/admin_screen.dart';
 import '../screens/donate_screen.dart';
 import '../screens/events_screen.dart';
@@ -12,7 +13,6 @@ import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/meetings_screen.dart';
 import '../screens/pair_screen.dart';
-import '../screens/profile_screen.dart';
 import '../screens/qr_login_screen.dart';
 import '../screens/sponsorships_screen.dart';
 import '../screens/volunteering_screen.dart';
@@ -82,7 +82,7 @@ GoRouter buildRouter() {
               path: '/faq', pageBuilder: (_, __) => _page(const FaqScreen())),
           GoRoute(
               path: '/profile',
-              pageBuilder: (_, __) => _page(const ProfileScreen())),
+              pageBuilder: (_, __) => _page(const AccountScreen())),
           GoRoute(
               path: '/admin',
               pageBuilder: (_, __) => _page(const AdminScreen())),

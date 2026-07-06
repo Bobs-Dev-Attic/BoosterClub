@@ -63,6 +63,9 @@ class AuthProvider extends ChangeNotifier {
   Future<AuthResult> signInWithQrToken(String token, {String? sessionId}) =>
       _service.signInWithQrToken(token, sessionId: sessionId);
 
+  Future<AuthResult> updateEmail(String newEmail) =>
+      _service.updateEmail(newEmail);
+
   Future<void> updateProfile(AppUser user) async {
     await _service.updateProfile(user);
   }

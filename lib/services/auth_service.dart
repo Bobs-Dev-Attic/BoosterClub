@@ -257,6 +257,28 @@ class AuthService {
     }
   }
 
+  /// Starts an email-address change. Firebase sends a verification link to the
+  /// new address; the change takes effect once the user clicks it.
+  Future<AuthResult> updateEmail(String newEmail) async {
+    if (AppConfig.demoMode) {
+      return const AuthResult(
+          true, 'Demo mode: a verification link would be sent to the new email.');
+    }
+    final user = _auth.currentUser;
+    if (user == null) return const AuthResult(false, 'Not signed in.');
+    try {
+      await user.verifyBeforeUpdateEmail(newEmail);
+      return const AuthResult(true,
+          'Verification sent — check the new address to finish the change.');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return const AuthResult(false,
+            'For security, please sign out and back in, then try again.');
+      }
+      return AuthResult(false, e.message);
+    }
+  }
+
   // ---- Profile / sign out ----------------------------------------------
   Future<void> updateProfile(AppUser user) async {
     if (AppConfig.demoMode) {
