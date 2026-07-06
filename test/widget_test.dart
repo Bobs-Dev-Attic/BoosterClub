@@ -1,6 +1,5 @@
 import 'package:booster_club/config/app_config.dart';
 import 'package:booster_club/main.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
