@@ -30,15 +30,18 @@ jobs:
         run: flutter build web --release
 
   deploy:
-    # Auto-deploys to Firebase on every push to main — no local commands needed.
+    # Auto-deploys Hosting to Firebase on every push to main — no local commands.
     # One-time setup: add a repo secret named FIREBASE_SERVICE_ACCOUNT containing
     # a Firebase service-account JSON key (Firebase console → Project settings →
     # Service accounts → Generate new private key).
+    #
+    # NOTE: this deploys Hosting only. Deploying Firestore rules / Cloud Functions
+    # from CI needs extra IAM roles on the service account (Firebase Rules Admin
+    # + Service Usage Consumer, and for functions the Blaze plan); rules change
+    # rarely and can be deployed manually with `firebase deploy --only firestore:rules`.
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    env:
-      FIREBASE_PROJECT: boosterclub-bda
     steps:
       - uses: actions/checkout@v4
 
@@ -52,21 +55,10 @@ jobs:
           flutter pub get
           flutter build web --release
 
-      - uses: actions/setup-node@v4
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          node-version: '20'
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Write service account credentials
-        run: |
-          cat > "$RUNNER_TEMP/firebase-sa.json" <<'JSON'
-          ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          JSON
-
-      - name: Deploy hosting + Firestore rules
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
-        # Add ",functions" below once the project is on the Blaze plan.
-        run: firebase deploy --only hosting,firestore:rules --project "$FIREBASE_PROJECT" --non-interactive
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: boosterclub-bda
