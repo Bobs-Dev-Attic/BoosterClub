@@ -100,13 +100,40 @@ rules in `firestore.rules`).
 - **Member+** — can submit funding requests.
 - **Everyone (incl. guests)** — can browse all public content.
 
-## 🔑 QR-code sign-in
+## 🌱 Seeding content
 
-The web/desktop app shows a QR code encoding a short-lived pairing token. A phone that is
-already signed in scans it to approve the session; a Cloud Function then mints a Firebase
-custom token that the web app exchanges (`signInWithCustomToken`). In demo mode a
-"Simulate scan" button completes the flow instantly. Wiring the Cloud Function is the only
-backend piece required to make this production-ready.
+A fresh Firestore database starts empty. Sign in as an **Administrator/Web Admin**, open the
+**Admin Dashboard**, and click **Load sample content** to populate every collection with a
+starter set (events, volunteer shifts, sponsorship tiers, fundraisers, meetings, FAQs). It's
+idempotent — re-running overwrites the same sample docs rather than duplicating them. Edit or
+delete anything from there.
+
+> Bootstrapping the first admin: new sign-ups default to *Supporter*. Promote your own
+> account once by setting `role: "webAdmin"` on your `users/{uid}` doc in the Firebase
+> console; after that you can manage roles in-app.
+
+## 🔑 One-time email-link sign-in
+
+Passwordless "one-time code" login uses Firebase's email-link flow. Enable **Email link
+(passwordless sign-in)** under *Authentication → Sign-in method → Email/Password* in the
+console. The app sends a link, remembers the email on the device, and completes sign-in when
+the user returns (via `/finishSignIn`); if opened on another device it asks the user to
+confirm their email.
+
+## 🔑 QR-code sign-in (Cloud Function)
+
+Cross-device flow: the web app creates a `qr_sessions/{id}` doc and shows a QR encoding a
+`/pair?s=<id>` link. A phone that is already signed in opens it and approves, which calls the
+**`approveQrSignIn`** Cloud Function (`functions/index.js`). The function mints a Firebase
+custom token for the phone's user and writes it onto the session; the web app exchanges it via
+`signInWithCustomToken`. In demo mode a "Simulate scan" button completes the flow instantly.
+
+Deploy the function (requires the **Blaze** plan):
+
+```bash
+cd functions && npm install && cd ..
+firebase deploy --only functions,firestore:rules
+```
 
 ## 🧪 Verify
 

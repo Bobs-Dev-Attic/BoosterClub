@@ -68,6 +68,8 @@ class AdminScreen extends StatelessWidget {
                       Text('Admin Dashboard',
                           style: Theme.of(context).textTheme.titleLarge),
                       const Spacer(),
+                      _SeedButton(fs: fs),
+                      const SizedBox(width: 12),
                       Pill(user.role.label, icon: Icons.badge_outlined),
                     ],
                   ),
@@ -99,6 +101,72 @@ class _AdminTab {
   final IconData icon;
   final Widget Function(FirestoreService) build;
   _AdminTab(this.label, this.icon, this.build);
+}
+
+/// Populates every collection with the bundled sample content — handy for a
+/// fresh database. Shows a confirmation and a progress indicator.
+class _SeedButton extends StatefulWidget {
+  final FirestoreService fs;
+  const _SeedButton({required this.fs});
+
+  @override
+  State<_SeedButton> createState() => _SeedButtonState();
+}
+
+class _SeedButtonState extends State<_SeedButton> {
+  bool _busy = false;
+
+  Future<void> _seed() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.auto_awesome),
+        title: const Text('Load sample content?'),
+        content: const Text(
+          'This adds a starter set of events, volunteer opportunities, '
+          'sponsorship tiers, fundraisers, meetings and FAQs. Existing items '
+          'with the same IDs are overwritten; your other content is untouched.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Load content'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _busy = true);
+    try {
+      await widget.fs.seedSampleData();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Sample content loaded.')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not load content: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.tonalIcon(
+      onPressed: _busy ? null : _seed,
+      icon: _busy
+          ? const SizedBox(
+              width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.auto_awesome, size: 18),
+      label: Text(_busy ? 'Loading…' : 'Load sample content'),
+    );
+  }
 }
 
 /// Shared scaffold for an admin list: a header with an add button, and a list

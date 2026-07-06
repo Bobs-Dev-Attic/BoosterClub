@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_config.dart';
 import '../models/app_user.dart';
@@ -103,11 +105,42 @@ class AuthService {
       );
       await _auth.sendSignInLinkToEmail(
           email: email, actionCodeSettings: settings);
+      // Remember the address so we can complete sign-in when the user returns
+      // via the link on this same device without re-typing it.
+      await _saveEmailForSignIn(email);
       return const AuthResult(
           true, 'A one-time sign-in link has been emailed to you.');
     } on FirebaseAuthException catch (e) {
       return AuthResult(false, e.message);
     }
+  }
+
+  /// True if [link] (typically the current page URL) is a passwordless sign-in
+  /// link that should be completed.
+  bool isSignInLink(String link) {
+    if (AppConfig.demoMode) return false;
+    try {
+      return _auth.isSignInWithEmailLink(link);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// The email saved when the one-time link was requested (same device).
+  Future<String?> savedEmailForSignIn() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('emailForSignIn');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _saveEmailForSignIn(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('emailForSignIn', email);
+    } catch (_) {/* best effort */}
   }
 
   /// Completes sign-in from an email link (call with the full incoming URL).
@@ -117,6 +150,11 @@ class AuthService {
         return const AuthResult(false, 'Not a valid sign-in link.');
       }
       await _auth.signInWithEmailLink(email: email, emailLink: link);
+      // Clear the stored email once used.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('emailForSignIn');
+      } catch (_) {}
       return const AuthResult(true);
     } on FirebaseAuthException catch (e) {
       return AuthResult(false, e.message);
@@ -155,19 +193,67 @@ class AuthService {
   }
 
   // ---- QR sign-in -------------------------------------------------------
-  /// Signs in using a token embedded in a scanned QR code. In production the
-  /// token is a Firebase custom token minted by a Cloud Function after an
-  /// already-authenticated device approves the QR session; here we complete the
-  /// exchange. In demo mode any token signs in a demo account.
-  Future<AuthResult> signInWithQrToken(String token) async {
+  //
+  // Cross-device flow:
+  //   1. The web app creates a `qr_sessions/{id}` doc (status: pending) and
+  //      shows a QR encoding a /pair?s={id} URL.
+  //   2. A phone that is already signed in opens that URL and approves it,
+  //      which calls the `approveQrSignIn` Cloud Function. The function (Admin
+  //      SDK) mints a Firebase custom token for the phone's user and writes it
+  //      back onto the session doc.
+  //   3. The web app, watching the doc, exchanges the token via
+  //      signInWithCustomToken and deletes the session.
+
+  CollectionReference<Map<String, dynamic>> get _qrSessions =>
+      _db.collection('qr_sessions');
+
+  /// Creates a pending QR pairing session and returns its id.
+  Future<String> createQrSession() async {
+    final doc = _qrSessions.doc();
+    await doc.set({
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return doc.id;
+  }
+
+  /// Streams the status of a QR session so the web app can react to approval.
+  Stream<Map<String, dynamic>?> watchQrSession(String sessionId) =>
+      _qrSessions.doc(sessionId).snapshots().map((s) => s.data());
+
+  /// Web side: once the session carries a custom token, sign in with it and
+  /// clean up the session document.
+  Future<AuthResult> signInWithQrToken(String token, {String? sessionId}) async {
     if (AppConfig.demoMode) {
       return _demoSignIn('qr.user@example.com', name: 'QR User');
     }
     try {
       await _auth.signInWithCustomToken(token);
+      if (sessionId != null) {
+        await _qrSessions.doc(sessionId).delete().catchError((_) {});
+      }
       return const AuthResult(true);
     } on FirebaseAuthException catch (e) {
       return AuthResult(false, e.message);
+    }
+  }
+
+  /// Phone side: approve a scanned QR session. Calls the Cloud Function which
+  /// mints a custom token for the current (already signed-in) user.
+  Future<AuthResult> approveQrSession(String sessionId) async {
+    if (AppConfig.demoMode) return const AuthResult(true);
+    if (_auth.currentUser == null) {
+      return const AuthResult(false, 'Please sign in first, then approve.');
+    }
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('approveQrSignIn');
+      await callable.call<dynamic>({'sessionId': sessionId});
+      return const AuthResult(true);
+    } on FirebaseFunctionsException catch (e) {
+      return AuthResult(false, e.message ?? 'Approval failed.');
+    } catch (e) {
+      return AuthResult(false, '$e');
     }
   }
 

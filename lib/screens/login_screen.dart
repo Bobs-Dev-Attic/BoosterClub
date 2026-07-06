@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       final continueUrl = Uri.base.origin.isEmpty
           ? 'https://example.com'
-          : '${Uri.base.origin}/login';
+          : '${Uri.base.origin}/';
       _run(() => auth.sendSignInLink(_email.text.trim(), continueUrl));
       return;
     }
