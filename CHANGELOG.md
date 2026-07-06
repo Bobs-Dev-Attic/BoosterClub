@@ -3,6 +3,15 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.2.0
+- Redesigned **My Account** as a tabbed area: **Dashboard** (activity summary,
+  quick actions, your interests), **Account** (name, phone, mailing address,
+  organization), **Login & Security** (change email, reset password, sign out),
+  and **Preferences**.
+- **Preferences**: opt in/out of emails and pick interests grouped by Sports,
+  Clubs, Fundraising, Volunteering, Events, Meetings — with sub-categories
+  (e.g. Sports → Football/Basketball/Golf…, Clubs → Science/Social/Arts…).
+
 ## 1.1.1
 - Fix Firebase Hosting cache headers: Flutter's entry-point files
   (`flutter_bootstrap.js`, `main.dart.js`, `flutter_service_worker.js`,

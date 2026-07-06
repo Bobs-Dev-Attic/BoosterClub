@@ -52,7 +52,15 @@ class AppUser {
   final UserRole role;
   final String? phone;
   final String? organization; // used for sponsors
+  final String? address; // optional mailing/contact address
   final DateTime? createdAt;
+
+  /// Email-update opt-in flag.
+  final bool emailOptIn;
+
+  /// Selected interest keys (see lib/data/interests.dart), e.g.
+  /// `sports.football`, `clubs.science`, `fundraising`, `volunteering`.
+  final List<String> interests;
 
   const AppUser({
     required this.uid,
@@ -62,7 +70,10 @@ class AppUser {
     this.photoUrl,
     this.phone,
     this.organization,
+    this.address,
     this.createdAt,
+    this.emailOptIn = true,
+    this.interests = const [],
   });
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> data) {
@@ -74,6 +85,9 @@ class AppUser {
       role: UserRole.fromString(data['role'] as String?),
       phone: data['phone'] as String?,
       organization: data['organization'] as String?,
+      address: data['address'] as String?,
+      emailOptIn: data['emailOptIn'] as bool? ?? true,
+      interests: List<String>.from(data['interests'] as List? ?? const []),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -86,6 +100,9 @@ class AppUser {
       'role': role.name,
       'phone': phone,
       'organization': organization,
+      'address': address,
+      'emailOptIn': emailOptIn,
+      'interests': interests,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
@@ -98,6 +115,9 @@ class AppUser {
     UserRole? role,
     String? phone,
     String? organization,
+    String? address,
+    bool? emailOptIn,
+    List<String>? interests,
   }) {
     return AppUser(
       uid: uid,
@@ -107,6 +127,9 @@ class AppUser {
       role: role ?? this.role,
       phone: phone ?? this.phone,
       organization: organization ?? this.organization,
+      address: address ?? this.address,
+      emailOptIn: emailOptIn ?? this.emailOptIn,
+      interests: interests ?? this.interests,
       createdAt: createdAt,
     );
   }
