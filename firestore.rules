@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// Security rules for the Booster Club app.
+//
+// Content collections are publicly readable so guests can browse. Writes are
+// restricted by role, which is stored on each user's profile document at
+// /users/{uid}.role. Roles (ascending privilege):
+//   guest < supporter < member < sponsor < administrator < webAdmin
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return isSignedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : 'guest';
+    }
+
+    // Roles allowed to manage content.
+    function canManageContent() {
+      return userRole() in ['administrator', 'webAdmin'];
+    }
+
+    function isWebAdmin() {
+      return userRole() == 'webAdmin';
+    }
+
+    // ---- User profiles -------------------------------------------------
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      // A user may create/update their own profile, but may NOT elevate their
+      // own role — only a web admin can change roles.
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.role in ['supporter', 'member', 'sponsor'];
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role;
+      // Web admins can manage any profile (including roles).
+      allow read, write: if isWebAdmin();
+    }
+
+    // ---- Publicly browsable content, admin-managed ---------------------
+    match /events/{doc}        { allow read: if true; allow write: if canManageContent(); }
+    match /volunteering/{doc}  { allow read: if true; allow write: if canManageContent(); }
+    match /sponsorships/{doc}  { allow read: if true; allow write: if canManageContent(); }
+    match /fundraisers/{doc}   { allow read: if true; allow write: if canManageContent(); }
+    match /meetings/{doc}      { allow read: if true; allow write: if canManageContent(); }
+    match /faqs/{doc}          { allow read: if true; allow write: if canManageContent(); }
+
+    // ---- Funding requests ---------------------------------------------
+    // Anyone may read. Members and above may submit. Only content managers may
+    // update status or delete.
+    match /funding_requests/{doc} {
+      allow read: if true;
+      allow create: if userRole() in ['member', 'sponsor', 'administrator', 'webAdmin'];
+      allow update, delete: if canManageContent();
+    }
+
+    // ---- Volunteer sign-ups (per user) --------------------------------
+    match /signups/{doc} {
+      allow read: if canManageContent()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+  }
+}
