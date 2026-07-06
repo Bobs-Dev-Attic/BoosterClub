@@ -100,7 +100,7 @@ class _QrLoginScreenState extends State<QrLoginScreen> {
                           : () async {
                               setState(() => _busy = true);
                               await auth.signInWithQrToken(_pairingToken);
-                              if (mounted) context.go('/');
+                              if (context.mounted) context.go('/');
                             },
                       icon: const Icon(Icons.check),
                       label: const Text('Simulate scan (demo)'),

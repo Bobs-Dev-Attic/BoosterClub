@@ -310,7 +310,7 @@ Future<FundingRequest?> editFunding(
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: status,
+              initialValue: status,
               decoration: _dec('Status'),
               items: [
                 for (final s in statuses)

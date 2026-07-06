@@ -45,7 +45,7 @@ class ResponsiveScaffold extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  _TopBar(showMenu: false),
+                  const _TopBar(showMenu: false),
                   Expanded(child: child),
                 ],
               ),
@@ -58,10 +58,10 @@ class ResponsiveScaffold extends StatelessWidget {
     // Mobile layout
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            const _Logo(size: 28),
-            const SizedBox(width: 8),
+            _Logo(size: 28),
+            SizedBox(width: 8),
             Text(AppConfig.appName),
           ],
         ),

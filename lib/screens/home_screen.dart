@@ -125,7 +125,7 @@ class _Hero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Pill('${AppConfig.schoolName} Booster Club',
+          const Pill('${AppConfig.schoolName} Booster Club',
               color: AppTheme.gold, icon: Icons.star),
           const SizedBox(height: 16),
           Text(
@@ -140,7 +140,7 @@ class _Hero extends StatelessWidget {
               'volunteering, sponsorships and community fundraising. Browse '
               'events, lend a hand, or chip in — every bit helps.',
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 16,
                   height: 1.5),
             ),
@@ -168,7 +168,7 @@ class _Hero extends StatelessWidget {
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
                   ),
                   onPressed: () => context.go('/login'),
                   icon: const Icon(Icons.login),
@@ -181,7 +181,7 @@ class _Hero extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -195,7 +195,7 @@ class _Hero extends StatelessWidget {
                       'Demo mode — sample data. Configure Firebase to go live. '
                       'Tip: sign in with any "admin@…" email to explore admin tools.',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 12),
                     ),
                   ),

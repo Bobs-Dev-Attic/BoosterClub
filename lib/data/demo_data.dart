@@ -64,7 +64,7 @@ class DemoData {
       ];
 
   static List<Sponsorship> sponsorships() => [
-        Sponsorship(
+        const Sponsorship(
           id: 's1',
           title: 'Platinum Lion Sponsor',
           description:
@@ -78,7 +78,7 @@ class DemoData {
             'Website & app featured placement',
           ],
         ),
-        Sponsorship(
+        const Sponsorship(
           id: 's2',
           title: 'Gold Lion Sponsor',
           description:
@@ -91,7 +91,7 @@ class DemoData {
             'Social media shout-outs',
           ],
         ),
-        Sponsorship(
+        const Sponsorship(
           id: 's3',
           title: 'Silver Lion Sponsor',
           description:
@@ -196,28 +196,28 @@ class DemoData {
       ];
 
   static List<FaqItem> faqs() => [
-        FaqItem(
+        const FaqItem(
           id: 'q1',
           question: 'What is the Booster Club?',
           answer:
               'We are a parent- and community-run nonprofit that raises funds and volunteers to support all athletic and arts programs at Lincoln High School.',
           order: 1,
         ),
-        FaqItem(
+        const FaqItem(
           id: 'q2',
           question: 'How do I become a member?',
           answer:
               'Create an account in this app and choose a membership level, or attend any general meeting. Members get voting rights and early event access.',
           order: 2,
         ),
-        FaqItem(
+        const FaqItem(
           id: 'q3',
           question: 'Where does the money go?',
           answer:
               'Funds are distributed through our grant process to teams and clubs for uniforms, equipment, travel, scholarships and facility improvements.',
           order: 3,
         ),
-        FaqItem(
+        const FaqItem(
           id: 'q4',
           question: 'How can my business sponsor?',
           answer:
