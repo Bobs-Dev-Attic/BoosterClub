@@ -1,0 +1,35 @@
+name: booster_club
+description: "High School Booster Club app — events, volunteering, sponsorships, donations, fundraising and more."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+
+  # State management & routing
+  provider: ^6.1.2
+  go_router: ^14.2.7
+
+  # UI / utilities
+  qr_flutter: ^4.1.0
+  intl: ^0.19.0
+  google_fonts: ^6.2.1
+  url_launcher: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
