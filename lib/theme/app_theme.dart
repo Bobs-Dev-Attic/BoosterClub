@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Central Material 3 theme. School colors: deep navy + spirit gold.
+/// Central Material 3 theme. Walter Johnson Wildcats colors: kelly green + white.
 class AppTheme {
-  static const Color navy = Color(0xFF102A54);
-  static const Color gold = Color(0xFFF6B12B);
+  /// Primary brand color — Walter Johnson kelly green.
+  static const Color green = Color(0xFF00843D);
+  static const Color greenDark = Color(0xFF00602A);
+
+  /// Backwards-compatible aliases (the app was seeded with navy/gold names).
+  static const Color navy = green;
+  static const Color gold = greenDark;
 
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: navy,
-      primary: navy,
-      secondary: gold,
+      seedColor: green,
+      primary: green,
       brightness: Brightness.light,
     );
     return _base(scheme);
@@ -18,8 +22,7 @@ class AppTheme {
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: navy,
-      secondary: gold,
+      seedColor: green,
       brightness: Brightness.dark,
     );
     return _base(scheme);

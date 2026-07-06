@@ -1,11 +1,11 @@
 {
-    "name": "Booster Club",
-    "short_name": "Booster Club",
+    "name": "Walter Johnson Booster Club",
+    "short_name": "WJ Booster Club",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#102A54",
-    "theme_color": "#102A54",
-    "description": "High School Booster Club — events, volunteering, sponsorships, donations and fundraising.",
+    "background_color": "#00843D",
+    "theme_color": "#00843D",
+    "description": "Walter Johnson High School Booster Club — events, volunteering, sponsorships, donations and fundraising for our Wildcats.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

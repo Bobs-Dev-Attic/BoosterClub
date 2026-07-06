@@ -19,7 +19,7 @@ class DemoData {
           id: 'e2',
           title: 'Homecoming Football Game',
           description:
-              'Lincoln Lions take on the crosstown rivals. Tailgate opens at 4pm, kickoff at 7pm. Booster Club concession proceeds fund team travel.',
+              'Walter Johnson Wildcats take on the crosstown rivals. Tailgate opens at 4pm, kickoff at 7pm. Booster Club concession proceeds fund team travel.',
           startsAt: _future(45),
           location: 'Memorial Stadium',
         ),
@@ -66,7 +66,7 @@ class DemoData {
   static List<Sponsorship> sponsorships() => [
         const Sponsorship(
           id: 's1',
-          title: 'Platinum Lion Sponsor',
+          title: 'Platinum Wildcat Sponsor',
           description:
               'Our top tier partnership for businesses that want maximum visibility across all athletic and arts programs.',
           amount: 5000,
@@ -80,7 +80,7 @@ class DemoData {
         ),
         const Sponsorship(
           id: 's2',
-          title: 'Gold Lion Sponsor',
+          title: 'Gold Wildcat Sponsor',
           description:
               'Great exposure for local businesses supporting student athletes and performers.',
           amount: 2500,
@@ -93,7 +93,7 @@ class DemoData {
         ),
         const Sponsorship(
           id: 's3',
-          title: 'Silver Lion Sponsor',
+          title: 'Silver Wildcat Sponsor',
           description:
               'An affordable way to show your community pride and support.',
           amount: 1000,
@@ -147,7 +147,7 @@ class DemoData {
         ),
         FundraisingEvent(
           id: 'fr2',
-          title: 'Lions 5K Fun Run',
+          title: 'Wildcat 5K Fun Run',
           description:
               'A family-friendly run/walk around campus. Registration and sponsorships fuel the general fund.',
           goalAmount: 10000,
@@ -158,7 +158,7 @@ class DemoData {
           id: 'fr3',
           title: 'Spirit Wear Drive',
           description:
-              'Buy Lincoln Lions hoodies, tees and hats. Every purchase gives back to the athletic programs.',
+              'Buy Walter Johnson Wildcats hoodies, tees and hats. Every purchase gives back to the athletic programs.',
           goalAmount: 8000,
           raisedAmount: 7550,
           endsAt: _future(20),
@@ -200,7 +200,7 @@ class DemoData {
           id: 'q1',
           question: 'What is the Booster Club?',
           answer:
-              'We are a parent- and community-run nonprofit that raises funds and volunteers to support all athletic and arts programs at Lincoln High School.',
+              'We are a parent- and community-run nonprofit that raises funds and volunteers to support all athletic and arts programs at Walter Johnson High School.',
           order: 1,
         ),
         const FaqItem(

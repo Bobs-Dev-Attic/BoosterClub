@@ -5,8 +5,9 @@ class AppConfig {
   AppConfig._();
 
   /// The name shown throughout the app. Change to your school's booster club.
-  static const String appName = 'Booster Club';
-  static const String schoolName = 'Lincoln High School';
+  static const String appName = 'WJ Booster Club';
+  static const String schoolName = 'Walter Johnson High School';
+  static const String mascot = 'Wildcats';
 
   /// When true, the app runs against seeded in-memory data instead of Firebase.
   /// This is automatically enabled when [DefaultFirebaseOptions] still contains

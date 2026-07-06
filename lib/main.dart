@@ -17,9 +17,11 @@ Future<void> main() async {
   // initialization fails, fall back to demo mode so the app remains usable.
   if (DefaultFirebaseOptions.isConfigured) {
     try {
+      // Time-box init so a stalled network can never trap the app on the
+      // loading splash — fall back to offline/demo data instead.
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      );
+      ).timeout(const Duration(seconds: 10));
       AppConfig.demoMode = false;
     } catch (e) {
       debugPrint('Firebase init failed, running in demo mode: $e');
