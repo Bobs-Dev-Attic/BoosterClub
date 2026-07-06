@@ -136,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               phone: _phone.text.trim(),
                               organization: _org.text.trim(),
                             ));
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             setState(() => _saving = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Profile saved.')),

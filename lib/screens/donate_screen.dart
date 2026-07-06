@@ -101,7 +101,7 @@ class _DonateScreenState extends State<DonateScreen> {
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _designation,
+                    initialValue: _designation,
                     items: [
                       for (final d in _designations)
                         DropdownMenuItem(value: d, child: Text(d)),

@@ -105,7 +105,7 @@ class _DateBadge extends StatelessWidget {
       width: 60,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: scheme.primary.withOpacity(0.1),
+        color: scheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
