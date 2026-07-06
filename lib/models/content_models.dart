@@ -19,6 +19,7 @@ class SchoolEvent implements ContentItem {
   final String title;
   final String description;
   final DateTime? startsAt;
+  final DateTime? endsAt;
   final String location;
   final String? imageUrl;
 
@@ -27,6 +28,7 @@ class SchoolEvent implements ContentItem {
     required this.title,
     required this.description,
     this.startsAt,
+    this.endsAt,
     this.location = '',
     this.imageUrl,
   });
@@ -39,6 +41,7 @@ class SchoolEvent implements ContentItem {
         title: d['title'] ?? '',
         description: d['description'] ?? '',
         startsAt: _ts(d['startsAt']),
+        endsAt: _ts(d['endsAt']),
         location: d['location'] ?? '',
         imageUrl: d['imageUrl'],
       );
@@ -48,6 +51,7 @@ class SchoolEvent implements ContentItem {
         'title': title,
         'description': description,
         'startsAt': startsAt != null ? Timestamp.fromDate(startsAt!) : null,
+        'endsAt': endsAt != null ? Timestamp.fromDate(endsAt!) : null,
         'location': location,
         'imageUrl': imageUrl,
       };

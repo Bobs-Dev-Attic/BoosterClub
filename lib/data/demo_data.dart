@@ -6,13 +6,17 @@ class DemoData {
   static DateTime _future(int days) =>
       DateTime(2026, 7, 6).add(Duration(days: days));
 
+  static DateTime _at(int days, int hour, int minute) =>
+      DateTime(2026, 7, 6, hour, minute).add(Duration(days: days));
+
   static List<SchoolEvent> events() => [
         SchoolEvent(
           id: 'e1',
           title: 'Fall Sports Kickoff Rally',
           description:
               'Join us in the main gym to cheer on all fall sports teams as the new season begins. Free spirit gear for the first 100 students!',
-          startsAt: _future(20),
+          startsAt: _at(20, 18, 0),
+          endsAt: _at(20, 20, 0),
           location: 'Main Gymnasium',
         ),
         SchoolEvent(
@@ -20,7 +24,8 @@ class DemoData {
           title: 'Homecoming Football Game',
           description:
               'Walter Johnson Wildcats take on the crosstown rivals. Tailgate opens at 4pm, kickoff at 7pm. Booster Club concession proceeds fund team travel.',
-          startsAt: _future(45),
+          startsAt: _at(45, 16, 0),
+          endsAt: _at(45, 22, 0),
           location: 'Memorial Stadium',
         ),
         SchoolEvent(
@@ -28,7 +33,8 @@ class DemoData {
           title: 'Marching Band Showcase',
           description:
               'An evening celebrating our award-winning marching band and color guard ahead of the state competition.',
-          startsAt: _future(12),
+          startsAt: _at(12, 19, 0),
+          endsAt: _at(12, 21, 0),
           location: 'Performing Arts Center',
         ),
       ];
