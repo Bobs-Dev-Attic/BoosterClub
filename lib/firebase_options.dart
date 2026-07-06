@@ -31,29 +31,35 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // Project: boosterclub-bda (project number / sender id: 595475479160).
+  // apiKey and appId still need to be filled from the Firebase console after
+  // registering each app (or run `flutterfire configure` to generate all of it).
+  static const String _projectId = 'boosterclub-bda';
+  static const String _senderId = '595475479160';
+
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: _placeholder,
     appId: _placeholder,
-    messagingSenderId: _placeholder,
-    projectId: _placeholder,
-    authDomain: _placeholder,
-    storageBucket: _placeholder,
+    messagingSenderId: _senderId,
+    projectId: _projectId,
+    authDomain: '$_projectId.firebaseapp.com',
+    storageBucket: '$_projectId.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: _placeholder,
     appId: _placeholder,
-    messagingSenderId: _placeholder,
-    projectId: _placeholder,
-    storageBucket: _placeholder,
+    messagingSenderId: _senderId,
+    projectId: _projectId,
+    storageBucket: '$_projectId.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: _placeholder,
     appId: _placeholder,
-    messagingSenderId: _placeholder,
-    projectId: _placeholder,
-    storageBucket: _placeholder,
+    messagingSenderId: _senderId,
+    projectId: _projectId,
+    storageBucket: '$_projectId.firebasestorage.app',
     iosBundleId: 'com.boosterclub.boosterClub',
   );
 }
