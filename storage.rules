@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Storage rules for meeting-minutes PDFs.
+// Minutes are publicly readable; only Contributors and content managers may
+// upload, and only PDFs up to 20 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function role() {
+      return request.auth != null
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : 'guest';
+    }
+
+    match /minutes/{file} {
+      allow read: if true;
+      allow write: if role() in ['contributor', 'administrator', 'webAdmin']
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+    }
+  }
+}

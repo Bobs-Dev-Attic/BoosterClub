@@ -137,8 +137,9 @@ class _Rail extends StatelessWidget {
             destinations: [
               for (final s in kSections)
                 NavigationRailDestination(
-                  icon: Icon(s.icon),
-                  selectedIcon: Icon(s.selectedIcon),
+                  icon: Tooltip(message: s.label, child: Icon(s.icon)),
+                  selectedIcon:
+                      Tooltip(message: s.label, child: Icon(s.selectedIcon)),
                   label: Text(s.label),
                 ),
             ],

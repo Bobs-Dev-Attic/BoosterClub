@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../config/app_config.dart';
 import '../data/demo_data.dart';
@@ -116,6 +118,22 @@ class FirestoreService {
   /// Records a submitted funding request (available to members).
   Future<void> submitFundingRequest(FundingRequest req) =>
       upsert('funding_requests', req);
+
+  /// Uploads a meeting-minutes PDF to Firebase Storage and returns its public
+  /// download URL. In demo mode returns a placeholder URL.
+  Future<String> uploadMinutesPdf(
+      Uint8List bytes, String filename, int stamp) async {
+    final safe = filename.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    if (AppConfig.demoMode) {
+      return 'https://example.com/minutes/$safe';
+    }
+    final ref = FirebaseStorage.instance.ref('minutes/${stamp}_$safe');
+    final task = await ref.putData(
+      bytes,
+      SettableMetadata(contentType: 'application/pdf'),
+    );
+    return task.ref.getDownloadURL();
+  }
 
   /// Writes the bundled sample content into every collection. Used by admins
   /// to populate a fresh database. Idempotent: documents keep their demo IDs so
