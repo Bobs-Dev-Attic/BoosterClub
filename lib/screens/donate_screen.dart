@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
 class DonateScreen extends StatefulWidget {
@@ -140,6 +141,8 @@ class _DonateScreenState extends State<DonateScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 32),
+          const _PoweringStudentSuccess(),
         ],
       ),
     );
@@ -162,6 +165,160 @@ class _DonateScreenState extends State<DonateScreen> {
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shows where donations go — the Booster Club's 2026–2027 investments across
+/// clubs, athletics, school-wide support and events.
+class _PoweringStudentSuccess extends StatelessWidget {
+  const _PoweringStudentSuccess();
+
+  static const _groups = <_InvestGroup>[
+    _InvestGroup('Clubs & Activities', Icons.groups, [
+      'DECA competition fees',
+      'Fashion Club equipment',
+      'Girls Learn International — care kits',
+      'Mock Trial fees',
+      'Robotics Club — equipment & fees',
+      'Science Olympiad equipment',
+      'Youth in Government fees',
+    ]),
+    _InvestGroup('Athletics', Icons.sports, [
+      'Baseball — state champ t-shirts',
+      'Boys Lacrosse — helmets',
+      'Football — community night supplies',
+      'Swim — state champ t-shirts',
+      'Volleyball — nets',
+      'Wrestling — warmups & singlets',
+    ]),
+    _InvestGroup('School-Wide Support', Icons.school, [
+      'Gym area — TV / Firestick',
+      'Main office — chairs',
+      'The Pitch / Spectator — equipment & printing',
+      'WJ Production / Stage — wireless headphones',
+      'Weight room — dehumidifiers & vinyl wraps',
+    ]),
+    _InvestGroup('Events & Appreciation', Icons.celebration, [
+      'Building Services luncheon',
+      'Kennedy HS Booster Club donation',
+      'Key Club / COHE — senior citizens Thanksgiving luncheon',
+      'Staff ice cream social',
+      'Stem4all — science fair',
+      'Sue Amos Scholarship',
+      'WJ After-Prom party',
+      'WJ TEDx Club — event support',
+    ]),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [AppTheme.green, AppTheme.greenDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Powering Student Success',
+                  style: displayFont(context, size: 26, color: Colors.white)),
+              const SizedBox(height: 4),
+              Text('2026–2027 Booster Club investments',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 15)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        LayoutBuilder(builder: (context, c) {
+          final two = c.maxWidth >= 640;
+          final width = two ? (c.maxWidth - 16) / 2 : c.maxWidth;
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              for (final g in _groups)
+                SizedBox(width: width, child: _InvestCard(group: g)),
+            ],
+          );
+        }),
+        const SizedBox(height: 16),
+        Center(
+          child: Text(
+            'Thank you for your generous support — building our future together.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InvestGroup {
+  final String title;
+  final IconData icon;
+  final List<String> items;
+  const _InvestGroup(this.title, this.icon, this.items);
+}
+
+class _InvestCard extends StatelessWidget {
+  final _InvestGroup group;
+  const _InvestCard({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(group.icon, color: scheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(group.title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (final item in group.items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.check_circle_outline,
+                        size: 16, color: scheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(item)),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

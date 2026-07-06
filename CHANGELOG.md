@@ -3,6 +3,16 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.3.0
+- Left navigation rail icons now show hover **tooltips**.
+- Loading splash shows the **logo** instead of a paw.
+- Home hero can show the **school photo** as a faded, green-tinted background
+  (drop a JPG at `assets/images/school.jpg`; falls back to the green gradient).
+- Donate page adds a **"Powering Student Success"** section listing the
+  2026–2027 Booster Club investments (clubs, athletics, school-wide, events).
+- New **Contributor** role can **upload meeting-minutes PDFs** (Firebase
+  Storage) that get added to the Meetings page; storage security rules added.
+
 ## 1.2.2
 - CI fix: the v1.2.1 deploy failed because the service account can't deploy
   Firestore rules (403 on serviceusage). Reverted CI to Hosting-only auto-deploy

@@ -6,6 +6,7 @@ enum UserRole {
   guest,
   supporter,
   member,
+  contributor,
   sponsor,
   administrator,
   webAdmin;
@@ -25,6 +26,8 @@ enum UserRole {
         return 'Supporter';
       case UserRole.member:
         return 'Member';
+      case UserRole.contributor:
+        return 'Contributor';
       case UserRole.sponsor:
         return 'Sponsor';
       case UserRole.administrator:
@@ -37,6 +40,10 @@ enum UserRole {
   /// Can create / edit / delete app content.
   bool get canManageContent =>
       index >= UserRole.administrator.index;
+
+  /// Can upload meeting minutes (Contributors and content managers).
+  bool get canPostMinutes =>
+      this == UserRole.contributor || canManageContent;
 
   /// Can manage other users, roles and app configuration.
   bool get canAdministerSite => this == UserRole.webAdmin;

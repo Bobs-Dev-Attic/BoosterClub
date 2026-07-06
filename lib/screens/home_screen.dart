@@ -111,20 +111,42 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final wide = MediaQuery.sizeOf(context).width >= 700;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(wide ? 40 : 24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [AppTheme.green, Color(0xFF0AA64F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
         children: [
+          // Base fill so the tinted overlay always sits on green.
+          const Positioned.fill(child: ColoredBox(color: AppTheme.green)),
+          // Optional school photo behind the hero. Drop a JPG at
+          // assets/images/school.jpg to show the building faded/tinted; absent,
+          // it silently falls back to the plain green gradient.
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/school.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          // Green tint over the photo (semi-transparent so it shows through).
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.green.withValues(alpha: 0.86),
+                    const Color(0xFF0AA64F).withValues(alpha: 0.78),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(wide ? 40 : 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           const Pill('${AppConfig.schoolName} Booster Club',
               color: Colors.white, icon: Icons.star),
           const SizedBox(height: 16),
@@ -203,6 +225,9 @@ class _Hero extends StatelessWidget {
               ),
             ),
           ],
+              ],
+            ),
+          ),
         ],
       ),
     );
