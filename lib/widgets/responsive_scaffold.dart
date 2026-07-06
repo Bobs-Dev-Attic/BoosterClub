@@ -191,6 +191,13 @@ class _RailFooter extends StatelessWidget {
               ),
             ),
           ),
+        const SizedBox(height: 8),
+        Text(
+          'v${AppConfig.appVersion}',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
       ],
     );
   }
@@ -368,6 +375,16 @@ class _MobileDrawer extends StatelessWidget {
                   auth.signOut();
                 },
               ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12, top: 4),
+              child: Text(
+                'v${AppConfig.appVersion}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
           ],
         ),
       ),
@@ -381,22 +398,29 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    // White circular backdrop so the (black line-art) crest stays visible on
+    // dark surfaces and on the green hero.
+    return Container(
       width: size,
       height: size,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      padding: EdgeInsets.all(size * 0.04),
       child: Image.asset(
         'assets/images/wj_logo.png',
         fit: BoxFit.contain,
         // Graceful fallback (e.g. before the official crest is added): a green
-        // rounded badge with a wildcat paw.
+        // badge with a wildcat paw.
         errorBuilder: (context, error, stack) => Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
               colors: [AppTheme.green, AppTheme.greenDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(size * 0.28),
+            shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Icon(Icons.pets, size: size * 0.55, color: Colors.white),
