@@ -3,6 +3,12 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.1.1
+- Fix Firebase Hosting cache headers: Flutter's entry-point files
+  (`flutter_bootstrap.js`, `main.dart.js`, `flutter_service_worker.js`,
+  `index.html`) are no longer cached immutably, so deploys are picked up
+  immediately instead of serving stale code.
+
 ## 1.1.0
 - Logo updated to the black line-art Walter Johnson wildcat crest, shown on a
   white circular backdrop so it stays visible in dark mode and on the hero.
