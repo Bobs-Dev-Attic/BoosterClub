@@ -10,6 +10,7 @@ const List<String> kPermissions = [
   'manage_faqs',
   'manage_funding',
   'manage_history',
+  'manage_donations',
   'seed_content',
   'manage_users',
 ];
@@ -23,6 +24,7 @@ const Map<String, String> kPermissionLabels = {
   'manage_faqs': 'FAQ',
   'manage_funding': 'Funding Requests',
   'manage_history': 'History Facts',
+  'manage_donations': 'Donations',
   'seed_content': 'Load sample content',
   'manage_users': 'Users & Roles',
 };

@@ -1,5 +1,14 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../models/app_user.dart';
+import '../models/donation.dart';
+import '../providers/auth_provider.dart';
+import '../services/firestore_service.dart';
+import '../services/paypal_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -149,25 +158,278 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   void _donate() {
+    final fs = context.read<FirestoreService>();
+    final user = context.read<AuthProvider>().user;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.favorite, color: Colors.pink),
-        title: const Text('Thank you!'),
-        content: Text(
-          'This is a demo checkout. In production this would open a secure '
-          'payment provider (e.g. Stripe) for your \$$_amount '
-          '${_frequency.toLowerCase()} gift to "$_designation".',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (_) => _CheckoutDialog(
+        fs: fs,
+        user: user,
+        amount: _amount.toDouble(),
+        frequency: _frequency == 'Monthly' ? 'monthly' : 'one-time',
+        designation: _designation ?? 'Greatest Need',
       ),
     );
   }
+}
+
+/// Drives a single donation: writes the pending Firestore record, sends the
+/// donor to PayPal, then waits for the backend (capture + webhook) to confirm.
+/// In demo mode it simulates the whole handshake so the flow is previewable.
+class _CheckoutDialog extends StatefulWidget {
+  final FirestoreService fs;
+  final AppUser? user;
+  final double amount;
+  final String frequency;
+  final String designation;
+  const _CheckoutDialog({
+    required this.fs,
+    required this.user,
+    required this.amount,
+    required this.frequency,
+    required this.designation,
+  });
+
+  @override
+  State<_CheckoutDialog> createState() => _CheckoutDialogState();
+}
+
+enum _Phase { form, waiting, done, error }
+
+class _CheckoutDialogState extends State<_CheckoutDialog> {
+  late final PayPalService _paypal = PayPalService();
+  late final TextEditingController _name =
+      TextEditingController(text: widget.user?.displayName ?? '');
+  late final TextEditingController _email =
+      TextEditingController(text: widget.user?.email ?? '');
+
+  _Phase _phase = _Phase.form;
+  String? _error;
+  String? _donationId;
+  StreamSubscription<Donation?>? _sub;
+  bool _capturing = false;
+
+  bool get _signedIn => widget.user != null;
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _name.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _start() async {
+    final name = _name.text.trim();
+    final email = _email.text.trim();
+    if (name.isEmpty || !email.contains('@')) {
+      setState(() => _error = 'Enter your name and a valid email.');
+      return;
+    }
+    setState(() {
+      _error = null;
+      _phase = _Phase.waiting;
+    });
+
+    try {
+      final id = await widget.fs.createPendingDonation(Donation(
+        id: 'new',
+        uid: widget.user?.uid,
+        donorName: name,
+        donorEmail: email,
+        amount: widget.amount,
+        frequency: widget.frequency,
+        designation: widget.designation,
+      ));
+      _donationId = id;
+
+      // Watch for the backend to confirm the payment.
+      _sub = widget.fs.donationDoc(id).listen((d) {
+        if (d != null && d.status == DonationStatus.completed && mounted) {
+          setState(() => _phase = _Phase.done);
+        }
+      });
+
+      if (_paypal.isLive) {
+        final order = await _paypal.createOrder(id);
+        final uri = Uri.tryParse(order.approveUrl);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+        // Stay in `waiting`; the doc listener flips to `done` once the webhook
+        // (or the manual "I've paid" capture below) confirms.
+      } else {
+        // Demo: simulate PayPal approving + the webhook confirming.
+        await Future.delayed(const Duration(milliseconds: 900));
+        await widget.fs.simulateDonationCompleted(id);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _phase = _Phase.error;
+          _error = '$e';
+        });
+      }
+    }
+  }
+
+  Future<void> _capture() async {
+    if (_donationId == null) return;
+    setState(() => _capturing = true);
+    try {
+      final ok = await _paypal.captureOrder(_donationId!);
+      if (ok && mounted) setState(() => _phase = _Phase.done);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not confirm yet: $e');
+    } finally {
+      if (mounted) setState(() => _capturing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    switch (_phase) {
+      case _Phase.done:
+        return AlertDialog(
+          icon: const Icon(Icons.favorite, color: Colors.pink),
+          title: const Text('Thank you!'),
+          content: Text(
+            'Your \$${widget.amount.toStringAsFixed(0)} '
+            '${widget.frequency == 'monthly' ? 'monthly ' : ''}gift to '
+            '"${widget.designation}" is confirmed. A receipt will be emailed '
+            'to ${_email.text.trim()}.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      case _Phase.waiting:
+        return AlertDialog(
+          title: const Text('Completing your donation'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              Text(
+                _paypal.isLive
+                    ? 'Finish your payment in the PayPal window. This page will '
+                        'update automatically once it’s confirmed.'
+                    : 'Processing your demo donation…',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            if (_paypal.isLive) ...[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: _capturing ? null : _capture,
+                child: _capturing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('I’ve completed payment'),
+              ),
+            ],
+          ],
+        );
+      case _Phase.error:
+        return AlertDialog(
+          icon: const Icon(Icons.error_outline, color: Colors.red),
+          title: const Text('Something went wrong'),
+          content: Text(_error ?? 'Please try again.'),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      case _Phase.form:
+        return AlertDialog(
+          title: const Text('Confirm your donation'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _summaryRow('Amount',
+                    '\$${widget.amount.toStringAsFixed(0)}'
+                    '${widget.frequency == 'monthly' ? ' / month' : ''}'),
+                _summaryRow('Designation', widget.designation),
+                const Divider(height: 24),
+                if (!_signedIn) ...[
+                  const Text('Where should we send your receipt?',
+                      style: TextStyle(fontSize: 13)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _name,
+                    decoration: const InputDecoration(labelText: 'Full name'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                ] else
+                  Text('Receipt will go to ${_email.text.trim()}.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  _paypal.isLive
+                      ? 'You’ll be taken to PayPal to complete payment securely.'
+                      : 'Demo mode: no live PayPal account is configured, so '
+                          'this records a simulated donation.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: _start,
+              icon: const Icon(Icons.lock_outline, size: 18),
+              label: Text(_paypal.isLive ? 'Continue to PayPal' : 'Donate'),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _summaryRow(String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            Text(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
 }
 
 /// Shows where donations go — the Booster Club's 2026–2027 investments across

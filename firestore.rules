@@ -87,6 +87,24 @@ service cloud.firestore {
       allow update, delete: if hasPerm('manage_funding');
     }
 
+    // ---- Donations ----------------------------------------------------
+    // The app may only ever create a PENDING record (for itself, if signed in).
+    // It can never write a completed/refunded status or the capture id — those
+    // are set exclusively by the PayPal Cloud Functions via the Admin SDK,
+    // which bypasses these rules. Donors can read their own donations; donation
+    // managers can read them all for reporting.
+    match /donations/{id} {
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.paypalCaptureId == null
+        && (
+          (request.auth == null && request.resource.data.uid == null)
+          || (isSignedIn() && request.resource.data.uid == request.auth.uid)
+        );
+      allow read: if hasPerm('manage_donations')
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if false;
+    }
+
     // ---- QR sign-in pairing sessions ----------------------------------
     match /qr_sessions/{id} {
       allow create: if request.resource.data.keys().hasOnly(['status', 'createdAt'])

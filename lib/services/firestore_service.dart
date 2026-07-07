@@ -9,6 +9,7 @@ import '../data/demo_data.dart';
 import '../models/app_user.dart';
 import '../models/audit.dart';
 import '../models/content_models.dart';
+import '../models/donation.dart';
 
 /// Abstracts reads/writes for all content collections. Backed by Cloud
 /// Firestore in production, or an in-memory store when [AppConfig.demoMode].
@@ -284,5 +285,109 @@ class FirestoreService {
             details: a,
           ).toMap());
     }
+  }
+
+  // ---- Donations ledger -------------------------------------------------
+  final List<Donation> _demoDonations = [
+    Donation(
+      id: 'd-demo1',
+      donorName: 'Jamie Booster',
+      donorEmail: 'jamie@example.com',
+      amount: 100,
+      designation: 'Athletics',
+      status: DonationStatus.completed,
+      paypalCaptureId: 'DEMOCAP1',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      completedAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    Donation(
+      id: 'd-demo2',
+      donorName: 'Riley Parent',
+      donorEmail: 'riley@example.com',
+      amount: 50,
+      designation: 'Greatest Need',
+      status: DonationStatus.completed,
+      paypalCaptureId: 'DEMOCAP2',
+      createdAt: DateTime.now().subtract(const Duration(days: 9)),
+      completedAt: DateTime.now().subtract(const Duration(days: 9)),
+    ),
+  ];
+  final _demoDonationsCtl = StreamController<List<Donation>>.broadcast();
+  final Map<String, StreamController<Donation?>> _demoDonationDocCtls = {};
+
+  void _emitDonations() {
+    _demoDonationsCtl.add(List.of(_demoDonations));
+  }
+
+  /// Full donations ledger, newest first (for the Donations admin view).
+  Stream<List<Donation>> donations() {
+    if (AppConfig.demoMode) {
+      Future.microtask(_emitDonations);
+      return _demoDonationsCtl.stream;
+    }
+    return _db
+        .collection('donations')
+        .orderBy('createdAt', descending: true)
+        .limit(500)
+        .snapshots()
+        .map((s) => s.docs.map((d) => Donation.fromDoc(d.id, d.data())).toList());
+  }
+
+  /// Watches a single donation so the Donate page can react when a Cloud
+  /// Function flips its status to completed.
+  Stream<Donation?> donationDoc(String id) {
+    if (AppConfig.demoMode) {
+      final ctl = _demoDonationDocCtls.putIfAbsent(
+          id, () => StreamController<Donation?>.broadcast());
+      Future.microtask(() {
+        final match = _demoDonations.where((d) => d.id == id);
+        ctl.add(match.isEmpty ? null : match.first);
+      });
+      return ctl.stream;
+    }
+    return _db.collection('donations').doc(id).snapshots().map(
+        (d) => d.exists ? Donation.fromDoc(d.id, d.data()!) : null);
+  }
+
+  /// Creates the pending donation record and returns its id. The client may
+  /// only ever write a *pending* record (enforced by security rules); the
+  /// completed status is set server-side once PayPal confirms payment.
+  Future<String> createPendingDonation(Donation donation) async {
+    if (AppConfig.demoMode) {
+      final id = 'd-${DateTime.now().microsecondsSinceEpoch}';
+      _demoDonations.insert(
+        0,
+        Donation(
+          id: id,
+          uid: donation.uid,
+          donorName: donation.donorName,
+          donorEmail: donation.donorEmail,
+          amount: donation.amount,
+          currency: donation.currency,
+          frequency: donation.frequency,
+          designation: donation.designation,
+          status: DonationStatus.pending,
+          createdAt: DateTime.now(),
+        ),
+      );
+      _emitDonations();
+      return id;
+    }
+    final ref = await _db.collection('donations').add(donation.toPendingMap());
+    return ref.id;
+  }
+
+  /// Demo-only: simulates the Cloud Function + PayPal webhook confirming a
+  /// donation, so the preview build can show the full success flow.
+  Future<void> simulateDonationCompleted(String id) async {
+    final idx = _demoDonations.indexWhere((d) => d.id == id);
+    if (idx < 0) return;
+    _demoDonations[idx] = _demoDonations[idx].copyWith(
+      status: DonationStatus.completed,
+      paypalCaptureId: 'DEMOCAP',
+      completedAt: DateTime.now(),
+    );
+    _emitDonations();
+    _demoDonationDocCtls[id]?.add(_demoDonations[idx]);
   }
 }

@@ -3,6 +3,22 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.9.0
+- **Donations via PayPal, recorded in Firestore.** The Donate button now writes
+  a **pending** donation to a new `donations` collection, then sends the donor to
+  **PayPal** to pay. A trusted **Cloud Function** captures the payment and a
+  **PayPal webhook** (verified server-side) is the source of truth that flips the
+  record to **completed** — the client can never mark a donation paid.
+  - New `createPayPalOrder`, `capturePayPalOrder`, and `paypalWebhook` Cloud
+    Functions (also handle refunds/reversals).
+  - New **Donations** admin tab (gated by a new `manage_donations` permission)
+    showing every donation, its status, and total raised.
+  - Firestore rules only allow the client to create a *pending* record for
+    itself; status/capture id are Admin-SDK-only.
+  - **Demo mode** simulates the whole handshake so the flow is fully previewable
+    without a live PayPal account. Set `PAYPAL_CLIENT_ID` (build) + the
+    `PAYPAL_SECRET` / `PAYPAL_WEBHOOK_ID` function secrets to go live.
+
 ## 1.8.1
 - **Corporate Sponsorship page** rewritten to match the real program: a single
   **one-year stadium banner** sponsorship (**$1,000/yr**). Adds the value-prop
