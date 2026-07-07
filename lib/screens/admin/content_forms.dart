@@ -243,29 +243,60 @@ String? _optionalLatLng(String? v) {
   return null;
 }
 
-/// Result of the address-lookup dialog: a composed address string and, when the
-/// geocoder found a match, its coordinates.
+/// Result of the address-lookup dialog: a composed display address, the raw
+/// entered parts (saved on the event), and — when the geocoder matched — its
+/// coordinates.
 class _AddressLookupResult {
   final String address;
+  final String street;
+  final String city;
+  final String state;
+  final String zip;
   final double? latitude;
   final double? longitude;
-  const _AddressLookupResult(this.address, {this.latitude, this.longitude});
+  const _AddressLookupResult({
+    required this.address,
+    required this.street,
+    required this.city,
+    required this.state,
+    required this.zip,
+    this.latitude,
+    this.longitude,
+  });
 }
 
-/// Opens a dialog to enter a US street address, then geocodes it via the U.S.
-/// Census geocoder to determine latitude/longitude. [initialStreet] pre-fills
-/// the street line (e.g. from the existing Location Address field).
+/// Opens a dialog to enter a US address, then geocodes it via the U.S. Census
+/// geocoder to determine latitude/longitude. The dialog is pre-filled from any
+/// previously-saved address parts.
 Future<_AddressLookupResult?> _addressLookupDialog(
-    BuildContext context, String initialStreet) {
+  BuildContext context, {
+  String street = '',
+  String city = '',
+  String state = '',
+  String zip = '',
+}) {
   return showDialog<_AddressLookupResult>(
     context: context,
-    builder: (context) => _AddressLookupDialog(initialStreet: initialStreet),
+    builder: (context) => _AddressLookupDialog(
+      initialStreet: street,
+      initialCity: city,
+      initialState: state,
+      initialZip: zip,
+    ),
   );
 }
 
 class _AddressLookupDialog extends StatefulWidget {
   final String initialStreet;
-  const _AddressLookupDialog({required this.initialStreet});
+  final String initialCity;
+  final String initialState;
+  final String initialZip;
+  const _AddressLookupDialog({
+    required this.initialStreet,
+    required this.initialCity,
+    required this.initialState,
+    required this.initialZip,
+  });
 
   @override
   State<_AddressLookupDialog> createState() => _AddressLookupDialogState();
@@ -274,9 +305,9 @@ class _AddressLookupDialog extends StatefulWidget {
 class _AddressLookupDialogState extends State<_AddressLookupDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _street;
-  final _city = TextEditingController();
-  final _state = TextEditingController();
-  final _zip = TextEditingController();
+  late final TextEditingController _city;
+  late final TextEditingController _state;
+  late final TextEditingController _zip;
 
   bool _busy = false;
   bool _noMatch = false;
@@ -286,6 +317,9 @@ class _AddressLookupDialogState extends State<_AddressLookupDialog> {
   void initState() {
     super.initState();
     _street = TextEditingController(text: widget.initialStreet);
+    _city = TextEditingController(text: widget.initialCity);
+    _state = TextEditingController(text: widget.initialState);
+    _zip = TextEditingController(text: widget.initialZip);
   }
 
   @override
@@ -297,16 +331,22 @@ class _AddressLookupDialogState extends State<_AddressLookupDialog> {
     super.dispose();
   }
 
-  String _composed() {
-    final cityStateZip = [
-      _city.text.trim(),
-      [_state.text.trim(), _zip.text.trim()]
-          .where((s) => s.isNotEmpty)
-          .join(' '),
-    ].where((s) => s.isNotEmpty).join(', ');
-    return [_street.text.trim(), cityStateZip]
-        .where((s) => s.isNotEmpty)
-        .join(', ');
+  _AddressLookupResult _result({double? latitude, double? longitude, String? matched}) {
+    final composed = GeocodingService.oneLine(
+      street: _street.text,
+      city: _city.text,
+      state: _state.text,
+      zip: _zip.text,
+    );
+    return _AddressLookupResult(
+      address: (matched != null && matched.isNotEmpty) ? matched : composed,
+      street: _street.text.trim(),
+      city: _city.text.trim(),
+      state: _state.text.trim(),
+      zip: _zip.text.trim(),
+      latitude: latitude,
+      longitude: longitude,
+    );
   }
 
   Future<void> _lookup() async {
@@ -325,10 +365,10 @@ class _AddressLookupDialogState extends State<_AddressLookupDialog> {
     );
     if (!mounted) return;
     if (result != null) {
-      navigator.pop(_AddressLookupResult(
-        result.matchedAddress.isNotEmpty ? result.matchedAddress : _composed(),
+      navigator.pop(_result(
         latitude: result.latitude,
         longitude: result.longitude,
+        matched: result.matchedAddress,
       ));
     } else {
       setState(() {
@@ -402,10 +442,8 @@ class _AddressLookupDialogState extends State<_AddressLookupDialog> {
         ),
         if (_noMatch)
           TextButton(
-            onPressed: _busy
-                ? null
-                : () => Navigator.pop(
-                    context, _AddressLookupResult(_composed())),
+            onPressed:
+                _busy ? null : () => Navigator.pop(context, _result()),
             child: const Text('Use address anyway'),
           ),
         FilledButton.icon(
@@ -512,6 +550,13 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
       text: (e != null && e.hasGeo) ? '${e.latitude}, ${e.longitude}' : '');
   String category = e?.category ?? 'General';
 
+  // Structured address parts, saved on the event and used to pre-fill the
+  // address-lookup dialog.
+  String street = e?.street ?? '';
+  String city = e?.city ?? '';
+  String state = e?.state ?? '';
+  String zip = e?.zip ?? '';
+
   // Date/time state is owned here so the pickers can stay controlled. A null
   // time means "blank" (the event is all-day).
   DateTime? startDate = e?.startsAt == null
@@ -557,6 +602,10 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
             location: loc.text.trim(),
             latitude: lat,
             longitude: lng,
+            street: street,
+            city: city,
+            state: state,
+            zip: zip,
             allDay: allDay,
             startsAt: start,
             endsAt: end,
@@ -626,9 +675,20 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
                       icon: const Icon(Icons.add_location_alt_outlined),
                       onPressed: () async {
                         final result = await _addressLookupDialog(
-                            context, loc.text.trim());
+                          context,
+                          // Pre-fill from saved parts; fall back to the current
+                          // Location Address text as the street line.
+                          street: street.isNotEmpty ? street : loc.text.trim(),
+                          city: city,
+                          state: state,
+                          zip: zip,
+                        );
                         if (result == null) return;
                         setLocal(() {
+                          street = result.street;
+                          city = result.city;
+                          state = result.state;
+                          zip = result.zip;
                           if (result.address.isNotEmpty) {
                             loc.text = result.address;
                           }

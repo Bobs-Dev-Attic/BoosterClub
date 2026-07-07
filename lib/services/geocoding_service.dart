@@ -24,8 +24,9 @@ class GeocodingService {
 
   final http.Client _client;
 
-  /// Parses a Census `/geocoder/locations/address` JSON payload, returning the
-  /// first match (or null when there are none). Exposed for testing.
+  /// Parses a Census `/geocoder/locations/*` JSON payload (the `address` and
+  /// `onelineaddress` endpoints share this shape), returning the first match
+  /// (or null when there are none). Exposed for testing.
   static GeocodeResult? parse(String body) {
     final json = jsonDecode(body) as Map<String, dynamic>;
     final matches =
@@ -44,23 +45,39 @@ class GeocodingService {
     );
   }
 
-  /// Geocodes the given address parts. [street] is required; the rest help
-  /// disambiguate. Returns null on no match or failure.
+  /// Joins address parts into a single one-line address string, skipping any
+  /// blank parts (e.g. "6400 Rock Spring Dr, Bethesda, MD 20814").
+  static String oneLine({
+    String street = '',
+    String city = '',
+    String state = '',
+    String zip = '',
+  }) {
+    final stateZip =
+        [state.trim(), zip.trim()].where((s) => s.isNotEmpty).join(' ');
+    return [street.trim(), city.trim(), stateZip]
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+  }
+
+  /// Geocodes the given address parts. Uses the Census *one-line* endpoint,
+  /// which parses a full address from a single field — so it works whether the
+  /// user fills separate city/state/zip fields or types the whole address into
+  /// one. Returns null on no match or failure.
   Future<GeocodeResult?> geocode({
     required String street,
     String city = '',
     String state = '',
     String zip = '',
   }) async {
+    final address = oneLine(street: street, city: city, state: state, zip: zip);
+    if (address.isEmpty) return null;
     try {
       final uri = Uri.https(
         'geocoding.geo.census.gov',
-        '/geocoder/locations/address',
+        '/geocoder/locations/onelineaddress',
         {
-          'street': street,
-          if (city.trim().isNotEmpty) 'city': city.trim(),
-          if (state.trim().isNotEmpty) 'state': state.trim(),
-          if (zip.trim().isNotEmpty) 'zip': zip.trim(),
+          'address': address,
           'benchmark': 'Public_AR_Current',
           'format': 'json',
         },

@@ -27,6 +27,13 @@ class SchoolEvent implements ContentItem {
   final double? latitude;
   final double? longitude;
 
+  /// The structured address parts entered via the address-lookup dialog. Saved
+  /// so they can be re-edited later; [location] holds the display string.
+  final String street;
+  final String city;
+  final String state;
+  final String zip;
+
   /// When true the event has a date but no specific time-of-day (the Time
   /// field was left blank), so times are hidden throughout the UI.
   final bool allDay;
@@ -43,6 +50,10 @@ class SchoolEvent implements ContentItem {
     this.location = '',
     this.latitude,
     this.longitude,
+    this.street = '',
+    this.city = '',
+    this.state = '',
+    this.zip = '',
     this.allDay = false,
     this.imageUrl,
     this.category = 'General',
@@ -63,6 +74,10 @@ class SchoolEvent implements ContentItem {
         location: d['location'] ?? '',
         latitude: (d['latitude'] as num?)?.toDouble(),
         longitude: (d['longitude'] as num?)?.toDouble(),
+        street: d['street'] ?? '',
+        city: d['city'] ?? '',
+        state: d['state'] ?? '',
+        zip: d['zip'] ?? '',
         allDay: d['allDay'] as bool? ?? false,
         imageUrl: d['imageUrl'],
         category: d['category'] ?? 'General',
@@ -77,6 +92,10 @@ class SchoolEvent implements ContentItem {
         'location': location,
         'latitude': latitude,
         'longitude': longitude,
+        'street': street,
+        'city': city,
+        'state': state,
+        'zip': zip,
         'allDay': allDay,
         'imageUrl': imageUrl,
         'category': category,

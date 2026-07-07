@@ -34,4 +34,31 @@ void main() {
       expect(GeocodingService.parse(body), isNull);
     });
   });
+
+  group('GeocodingService.oneLine', () {
+    test('joins all parts, skipping blanks', () {
+      expect(
+        GeocodingService.oneLine(
+            street: '6400 Rock Spring Dr',
+            city: 'Bethesda',
+            state: 'MD',
+            zip: '20814'),
+        '6400 Rock Spring Dr, Bethesda, MD 20814',
+      );
+    });
+
+    test('passes a full address typed into the street field through as-is', () {
+      expect(
+        GeocodingService.oneLine(street: '6400 Rock Spring Drive, Bethesda, MD 20814'),
+        '6400 Rock Spring Drive, Bethesda, MD 20814',
+      );
+    });
+
+    test('handles partial parts', () {
+      expect(
+        GeocodingService.oneLine(street: '100 Main St', state: 'MD'),
+        '100 Main St, MD',
+      );
+    });
+  });
 }
