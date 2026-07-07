@@ -150,13 +150,25 @@ class FundingRequest implements ContentItem {
   @override
   final String id;
   @override
-  final String title;
-  final String description;
+  final String title; // Sport team or club name
+  final String description; // How the funds will be used
   final double amountRequested;
-  final String requestedBy;
+  final String requestedBy; // Coach/sponsor name (kept for card display)
   final String status; // pending / approved / declined / funded
   final DateTime? submittedAt;
   final String? imageUrl;
+
+  // Expanded application fields.
+  final String groupType; // 'sport' | 'club' | ''
+  final String coachName;
+  final String coachEmail;
+  final String parentName;
+  final String parentEmail;
+  final int studentCount;
+  final bool metWithLeadership; // met with AD (sports) / Asst. Principal (clubs)
+  final String previousRequests;
+  final String boosterMembersInfo;
+  final List<String> fundraisingContributions;
 
   const FundingRequest({
     required this.id,
@@ -167,6 +179,16 @@ class FundingRequest implements ContentItem {
     this.status = 'pending',
     this.submittedAt,
     this.imageUrl,
+    this.groupType = '',
+    this.coachName = '',
+    this.coachEmail = '',
+    this.parentName = '',
+    this.parentEmail = '',
+    this.studentCount = 0,
+    this.metWithLeadership = false,
+    this.previousRequests = '',
+    this.boosterMembersInfo = '',
+    this.fundraisingContributions = const [],
   });
 
   @override
@@ -182,6 +204,17 @@ class FundingRequest implements ContentItem {
         status: d['status'] ?? 'pending',
         submittedAt: _ts(d['submittedAt']),
         imageUrl: d['imageUrl'],
+        groupType: d['groupType'] ?? '',
+        coachName: d['coachName'] ?? '',
+        coachEmail: d['coachEmail'] ?? '',
+        parentName: d['parentName'] ?? '',
+        parentEmail: d['parentEmail'] ?? '',
+        studentCount: (d['studentCount'] ?? 0) as int,
+        metWithLeadership: d['metWithLeadership'] ?? false,
+        previousRequests: d['previousRequests'] ?? '',
+        boosterMembersInfo: d['boosterMembersInfo'] ?? '',
+        fundraisingContributions:
+            List<String>.from(d['fundraisingContributions'] ?? const []),
       );
 
   @override
@@ -192,9 +225,47 @@ class FundingRequest implements ContentItem {
         'requestedBy': requestedBy,
         'status': status,
         'imageUrl': imageUrl,
+        'groupType': groupType,
+        'coachName': coachName,
+        'coachEmail': coachEmail,
+        'parentName': parentName,
+        'parentEmail': parentEmail,
+        'studentCount': studentCount,
+        'metWithLeadership': metWithLeadership,
+        'previousRequests': previousRequests,
+        'boosterMembersInfo': boosterMembersInfo,
+        'fundraisingContributions': fundraisingContributions,
         'submittedAt':
             submittedAt != null ? Timestamp.fromDate(submittedAt!) : FieldValue.serverTimestamp(),
       };
+
+  FundingRequest copyWith({
+    String? title,
+    String? description,
+    double? amountRequested,
+    String? requestedBy,
+    String? status,
+  }) =>
+      FundingRequest(
+        id: id,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        amountRequested: amountRequested ?? this.amountRequested,
+        requestedBy: requestedBy ?? this.requestedBy,
+        status: status ?? this.status,
+        submittedAt: submittedAt,
+        imageUrl: imageUrl,
+        groupType: groupType,
+        coachName: coachName,
+        coachEmail: coachEmail,
+        parentName: parentName,
+        parentEmail: parentEmail,
+        studentCount: studentCount,
+        metWithLeadership: metWithLeadership,
+        previousRequests: previousRequests,
+        boosterMembersInfo: boosterMembersInfo,
+        fundraisingContributions: fundraisingContributions,
+      );
 }
 
 /// A fundraising event / campaign with a goal and running total.

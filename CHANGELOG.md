@@ -3,6 +3,16 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.5.0
+- Rebuilt the **Funding Request form** (full-screen) with the full application:
+  Sport Team vs Club selector; team/club name; coach/sponsor name & email;
+  parent commissioner name & email; number of student participants; requested
+  amount; how funds will be used; met-with-AD/Asst.-Principal yes/no; previous
+  request history; current Booster-member parents; and a "contribution to
+  fundraising" check-all list. Optional photo (library/camera) retained.
+- Request cards now show group type and student count; the extra fields are
+  stored and preserved when an admin edits a request.
+
 ## 1.4.1
 - Point the hero background at `assets/images/wj-frontb.jpg` (the school photo
   filename). Add the file at that path to show the building behind the hero.
