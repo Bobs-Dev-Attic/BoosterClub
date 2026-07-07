@@ -18,6 +18,7 @@ class DemoData {
           startsAt: _at(20, 18, 0),
           endsAt: _at(20, 20, 0),
           location: 'Main Gymnasium',
+          category: 'Athletics',
         ),
         SchoolEvent(
           id: 'e2',
@@ -27,6 +28,7 @@ class DemoData {
           startsAt: _at(45, 16, 0),
           endsAt: _at(45, 22, 0),
           location: 'Memorial Stadium',
+          category: 'Athletics',
         ),
         SchoolEvent(
           id: 'e3',
@@ -36,6 +38,43 @@ class DemoData {
           startsAt: _at(12, 19, 0),
           endsAt: _at(12, 21, 0),
           location: 'Performing Arts Center',
+          category: 'Arts',
+        ),
+        SchoolEvent(
+          id: 'e4',
+          title: 'Booster Club Membership Deadline',
+          description:
+              'Last day to join at the early-bird rate and be listed in the fall program.',
+          startsAt: _at(9, 23, 30),
+          location: 'Online',
+          category: 'Deadline',
+        ),
+        SchoolEvent(
+          id: 'e5',
+          title: 'Professional Day — No School',
+          description: 'Schools closed for students; staff professional development.',
+          startsAt: _at(28, 0, 0),
+          location: 'District-wide',
+          category: 'School Holiday',
+        ),
+        SchoolEvent(
+          id: 'e6',
+          title: 'Early Release — Half Day',
+          description: 'Half day for students; dismissal at 12:15 PM.',
+          startsAt: _at(33, 8, 0),
+          endsAt: _at(33, 12, 15),
+          location: 'Walter Johnson HS',
+          category: 'Half Day',
+        ),
+        SchoolEvent(
+          id: 'e7',
+          title: 'Concession Stand Volunteers Needed',
+          description:
+              'Sign up to staff the concession stand at Friday night football. Two-hour shifts.',
+          startsAt: _at(18, 17, 0),
+          endsAt: _at(18, 21, 0),
+          location: 'Memorial Stadium',
+          category: 'Volunteer',
         ),
       ];
 
@@ -229,6 +268,34 @@ class DemoData {
           answer:
               'Visit the Sponsorships section to view tiers and benefits, then contact us directly or create a sponsor account.',
           order: 4,
+        ),
+      ];
+
+  static List<HistoryFact> historyFacts() => [
+        const HistoryFact(
+          id: 'h1',
+          title: 'Walter Johnson opens its doors',
+          fact:
+              'Walter Johnson High School was established in 1956 in Bethesda, Maryland, and has been home of the Wildcats ever since.',
+          month: 9,
+          day: 4,
+          year: 1956,
+        ),
+        const HistoryFact(
+          id: 'h2',
+          title: 'Wildcats spirit',
+          fact:
+              'The Wildcat mascot — "Celebrating Excellence" — represents Walter Johnson\'s tradition of achievement in academics, athletics and the arts.',
+          month: 1,
+          day: 1,
+        ),
+        const HistoryFact(
+          id: 'h3',
+          title: 'Booster Club founded',
+          fact:
+              'The Booster Club was formed by parents and community members to fund uniforms, equipment, scholarships and program grants for WJ students.',
+          month: 7,
+          day: 6,
         ),
       ];
 }

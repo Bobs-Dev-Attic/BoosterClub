@@ -59,6 +59,12 @@ service cloud.firestore {
     }
     match /faqs/{doc}          { allow read: if true; allow write: if canManageContent(); }
 
+    // "This day in history" facts — contributors and managers may edit.
+    match /history_facts/{doc} {
+      allow read: if true;
+      allow write: if canPostMinutes();
+    }
+
     // ---- Funding requests ---------------------------------------------
     // Anyone may read. Members and above may submit. Only content managers may
     // update status or delete.

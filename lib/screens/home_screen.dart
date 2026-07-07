@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/history_section.dart';
 import '../widgets/nav_destinations.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -22,6 +23,8 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _Hero(),
+          const SizedBox(height: 24),
+          const HistorySection(),
           const SizedBox(height: 32),
           _QuickLinks(),
           const SizedBox(height: 32),
