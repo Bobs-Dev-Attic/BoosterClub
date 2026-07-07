@@ -3,6 +3,16 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.12.2
+- **Address geocoding fix.** The "Find coordinates" lookup now uses the Census
+  **one-line** geocoder endpoint, so typing a full address into the Street field
+  (e.g. `6400 Rock Spring Drive, Bethesda, MD 20814`) resolves correctly — the
+  previous structured endpoint required the street line only and returned no
+  match otherwise.
+- **Event addresses are saved.** The street, city, state and ZIP entered in the
+  address dialog are now stored on the event and **pre-fill the dialog** the next
+  time you edit it.
+
 ## 1.12.1
 - **Look up event coordinates from an address.** The event editor's **Location**
   field is renamed **Location Address** and gains a **📍 button** that opens an
