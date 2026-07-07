@@ -6,6 +6,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import '../config/app_config.dart';
 import '../data/demo_data.dart';
+import '../models/app_user.dart';
+import '../models/audit.dart';
 import '../models/content_models.dart';
 
 /// Abstracts reads/writes for all content collections. Backed by Cloud
@@ -183,6 +185,104 @@ class FirestoreService {
     }
     for (final h in DemoData.historyFacts()) {
       await upsert('history_facts', h);
+    }
+  }
+
+  // ---- User administration & audit (Web Admin) --------------------------
+  final List<AppUser> _demoUsers = [
+    const AppUser(
+        uid: 'demo-admin',
+        email: 'admin@example.com',
+        displayName: 'Alex Admin',
+        role: UserRole.webAdmin),
+    const AppUser(
+        uid: 'demo-contrib',
+        email: 'casey@example.com',
+        displayName: 'Casey Contributor',
+        role: UserRole.contributor),
+    const AppUser(
+        uid: 'demo-member',
+        email: 'morgan@example.com',
+        displayName: 'Morgan Member',
+        role: UserRole.member),
+  ];
+  final List<AuditEntry> _demoAudit = [];
+  final _demoUsersCtl = StreamController<List<AppUser>>.broadcast();
+  final _demoAuditCtl = StreamController<List<AuditEntry>>.broadcast();
+
+  Stream<List<AppUser>> users() {
+    if (AppConfig.demoMode) {
+      Future.microtask(() => _demoUsersCtl.add(List.of(_demoUsers)));
+      return _demoUsersCtl.stream;
+    }
+    return _db
+        .collection('users')
+        .snapshots()
+        .map((s) => s.docs.map((d) => AppUser.fromMap(d.id, d.data())).toList()
+          ..sort((a, b) => a.displayName
+              .toLowerCase()
+              .compareTo(b.displayName.toLowerCase())));
+  }
+
+  Stream<List<AuditEntry>> auditLog() {
+    if (AppConfig.demoMode) {
+      Future.microtask(() => _demoAuditCtl.add(List.of(_demoAudit)));
+      return _demoAuditCtl.stream;
+    }
+    return _db
+        .collection('audit_log')
+        .orderBy('at', descending: true)
+        .limit(200)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => AuditEntry.fromDoc(d.id, d.data())).toList());
+  }
+
+  /// Persists a user's role/grants (Web Admin only) and records audit entries.
+  Future<void> saveUserAdmin(
+    AppUser updated, {
+    required AppUser actor,
+    required List<String> actions, // human-readable change descriptions
+  }) async {
+    if (AppConfig.demoMode) {
+      final idx = _demoUsers.indexWhere((u) => u.uid == updated.uid);
+      if (idx >= 0) _demoUsers[idx] = updated;
+      for (final a in actions) {
+        _demoAudit.insert(
+          0,
+          AuditEntry(
+            id: 'a${_demoAudit.length}',
+            actorUid: actor.uid,
+            actorName: actor.displayName,
+            targetUid: updated.uid,
+            targetName: updated.displayName,
+            action: 'change',
+            details: a,
+            at: DateTime.now(),
+          ),
+        );
+      }
+      _demoUsersCtl.add(List.of(_demoUsers));
+      _demoAuditCtl.add(List.of(_demoAudit));
+      return;
+    }
+    await _db.collection('users').doc(updated.uid).set({
+      'role': updated.role.name,
+      'grants': {
+        for (final e in updated.grants.entries)
+          e.key: Timestamp.fromDate(e.value),
+      },
+    }, SetOptions(merge: true));
+    for (final a in actions) {
+      await _db.collection('audit_log').add(AuditEntry(
+            id: 'new',
+            actorUid: actor.uid,
+            actorName: actor.displayName,
+            targetUid: updated.uid,
+            targetName: updated.displayName,
+            action: 'change',
+            details: a,
+          ).toMap());
     }
   }
 }

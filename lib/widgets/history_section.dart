@@ -27,7 +27,7 @@ class HistorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fs = context.read<FirestoreService>();
-    final canManage = context.watch<AuthProvider>().user?.role.canPostMinutes ?? false;
+    final canManage = context.watch<AuthProvider>().user?.can('manage_history') ?? false;
 
     return StreamBuilder<List<HistoryFact>>(
       stream: fs.historyFacts(),

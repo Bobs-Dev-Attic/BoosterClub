@@ -16,7 +16,7 @@ class MeetingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final fs = context.read<FirestoreService>();
     final auth = context.watch<AuthProvider>();
-    final canPost = auth.user?.role.canPostMinutes ?? false;
+    final canPost = auth.user?.can('manage_meetings') ?? false;
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

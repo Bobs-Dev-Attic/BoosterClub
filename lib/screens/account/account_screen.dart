@@ -636,7 +636,7 @@ class _SecurityTabState extends State<_SecurityTab> {
           ),
         ),
         const SizedBox(height: 16),
-        if (widget.user.role.canManageContent)
+        if (widget.user.canManageAny)
           Card(
             child: ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),
