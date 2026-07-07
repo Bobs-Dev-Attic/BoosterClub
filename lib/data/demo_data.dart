@@ -111,39 +111,19 @@ class DemoData {
   static List<Sponsorship> sponsorships() => [
         const Sponsorship(
           id: 's1',
-          title: 'Platinum Wildcat Sponsor',
+          title: 'One-Year Corporate Stadium Banner',
           description:
-              'Our top tier partnership for businesses that want maximum visibility across all athletic and arts programs.',
-          amount: 5000,
-          tier: 'Platinum',
-          benefits: [
-            'Logo on stadium banner',
-            'Full-page program ad',
-            'PA announcements at all home games',
-            'Website & app featured placement',
-          ],
-        ),
-        const Sponsorship(
-          id: 's2',
-          title: 'Gold Wildcat Sponsor',
-          description:
-              'Great exposure for local businesses supporting student athletes and performers.',
-          amount: 2500,
-          tier: 'Gold',
-          benefits: [
-            'Logo on team website & app',
-            'Half-page program ad',
-            'Social media shout-outs',
-          ],
-        ),
-        const Sponsorship(
-          id: 's3',
-          title: 'Silver Wildcat Sponsor',
-          description:
-              'An affordable way to show your community pride and support.',
+              'Prominently featured in the WJ stadium for one full year, your '
+              'banner is visible to thousands of fans at WJ and community-wide '
+              'sporting events.',
           amount: 1000,
-          tier: 'Silver',
-          benefits: ['Quarter-page program ad', 'Website listing'],
+          tier: 'Corporate',
+          benefits: [
+            '3½ × 9 ft weather-resistant banner',
+            'Displayed on the stadium fence, easily seen by all fans',
+            'Visible for one full year',
+            'Reaches thousands at WJ & community sporting events',
+          ],
         ),
       ];
 
