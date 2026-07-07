@@ -3,6 +3,13 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.10.1
+- **History facts can link to a source.** Added an optional **Source / more info
+  URL** to history facts (both the admin editor and the home-page Manage dialog,
+  validated as an http/https URL). The "This Day in Wildcat History" card shows a
+  **Learn more** link when a source is set; "On This Day" suggestions and the
+  local pack pre-fill it with their Wikipedia source.
+
 ## 1.10.0
 - **Fix missing Admin Dashboard icons** (Users & Roles, Audit Log, Import CSV).
   The web build now ships the full Material icon font (`--no-tree-shake-icons`)

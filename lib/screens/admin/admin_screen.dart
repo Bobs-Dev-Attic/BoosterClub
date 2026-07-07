@@ -536,6 +536,7 @@ class _OnThisDayDialogState extends State<_OnThisDayDialog> {
       month: _date.month,
       day: _date.day,
       year: e.year,
+      sourceUrl: e.wikipediaUrl,
     );
     final saved = await editHistoryFact(context, seeded);
     if (saved != null) {

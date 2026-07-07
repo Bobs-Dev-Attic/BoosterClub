@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/content_models.dart';
 import '../providers/auth_provider.dart';
@@ -12,6 +13,13 @@ import 'common.dart';
 /// one). Contributors get a manage button to add/edit/delete facts.
 class HistorySection extends StatelessWidget {
   const HistorySection({super.key});
+
+  Future<void> _open(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   HistoryFact? _pick(List<HistoryFact> facts) {
     if (facts.isEmpty) return null;
@@ -94,6 +102,22 @@ class HistorySection extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(fact.fact,
                     style: Theme.of(context).textTheme.bodyMedium),
+                if (fact.sourceUrl != null) ...[
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => _open(fact.sourceUrl!),
+                      icon: const Icon(Icons.open_in_new, size: 14),
+                      label: const Text('Learn more'),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
@@ -178,6 +202,7 @@ class _ManageHistoryDialog extends StatelessWidget {
     final title = TextEditingController(text: f?.title);
     final fact = TextEditingController(text: f?.fact);
     final year = TextEditingController(text: f?.year?.toString() ?? '');
+    final source = TextEditingController(text: f?.sourceUrl ?? '');
     DateTime date = DateTime(2000, f?.month ?? DateTime.now().month,
         f?.day ?? DateTime.now().day);
     final formKey = GlobalKey<FormState>();
@@ -241,6 +266,13 @@ class _ManageHistoryDialog extends StatelessWidget {
                       validator: (v) =>
                           (v == null || v.isEmpty) ? 'Required' : null,
                     ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: source,
+                      keyboardType: TextInputType.url,
+                      decoration: const InputDecoration(
+                          labelText: 'Source / more info URL (optional)'),
+                    ),
                   ],
                 ),
               ),
@@ -263,6 +295,8 @@ class _ManageHistoryDialog extends StatelessWidget {
                   month: date.month,
                   day: date.day,
                   year: int.tryParse(year.text.trim()),
+                  sourceUrl:
+                      source.text.trim().isEmpty ? null : source.text.trim(),
                 ),
               );
               if (context.mounted) Navigator.pop(context);

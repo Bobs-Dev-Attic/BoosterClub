@@ -19,6 +19,8 @@ class LocalHistory {
           month: 9,
           day: 4,
           year: 1956,
+          sourceUrl:
+              'https://en.wikipedia.org/wiki/Walter_Johnson_High_School',
         ),
         HistoryFact(
           id: 'lh-namesake',
@@ -31,6 +33,7 @@ class LocalHistory {
           month: 11,
           day: 6,
           year: 1887,
+          sourceUrl: 'https://en.wikipedia.org/wiki/Walter_Johnson',
         ),
         HistoryFact(
           id: 'lh-hall-of-fame',
@@ -52,6 +55,8 @@ class LocalHistory {
           month: 9,
           day: 6,
           year: 1776,
+          sourceUrl:
+              'https://en.wikipedia.org/wiki/Montgomery_County,_Maryland',
         ),
         HistoryFact(
           id: 'lh-bethesda-name',

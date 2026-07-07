@@ -216,12 +216,25 @@ Widget _actions(GlobalKey<FormState> key, VoidCallback onSave) => Padding(
 String? _required(String? v) =>
     (v == null || v.trim().isEmpty) ? 'Required' : null;
 
+/// Validates an optional URL: blank is fine, otherwise it must parse as an
+/// absolute http(s) URL.
+String? _optionalUrl(String? v) {
+  final s = v?.trim() ?? '';
+  if (s.isEmpty) return null;
+  final uri = Uri.tryParse(s);
+  if (uri == null || !uri.hasScheme || !(uri.isScheme('http') || uri.isScheme('https'))) {
+    return 'Enter a full URL (https://…) or leave blank';
+  }
+  return null;
+}
+
 /// Editor for a "This Day in Wildcat History" fact. [seed] pre-fills the form
 /// (e.g. from an On-This-Day suggestion).
 Future<HistoryFact?> editHistoryFact(BuildContext context, HistoryFact? h) {
   final title = TextEditingController(text: h?.title);
   final fact = TextEditingController(text: h?.fact);
   final year = TextEditingController(text: h?.year?.toString() ?? '');
+  final source = TextEditingController(text: h?.sourceUrl ?? '');
   final now = DateTime.now();
   var date = DateTime(2000, h?.month ?? now.month, h?.day ?? now.day);
   return _formDialog<HistoryFact>(
@@ -271,6 +284,12 @@ Future<HistoryFact?> editHistoryFact(BuildContext context, HistoryFact? h) {
               decoration: _dec('Fact'),
               maxLines: 4,
               validator: _required),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: source,
+              decoration: _dec('Source / more info URL (optional)'),
+              keyboardType: TextInputType.url,
+              validator: _optionalUrl),
           _actions(
             key,
             () => submit(HistoryFact(
@@ -280,6 +299,7 @@ Future<HistoryFact?> editHistoryFact(BuildContext context, HistoryFact? h) {
               month: date.month,
               day: date.day,
               year: int.tryParse(year.text.trim()),
+              sourceUrl: source.text.trim().isEmpty ? null : source.text.trim(),
             )),
           ),
         ],

@@ -408,6 +408,9 @@ class HistoryFact implements ContentItem {
   final int day; // 1-31
   final int? year;
 
+  /// Optional link to the source or more information.
+  final String? sourceUrl;
+
   const HistoryFact({
     required this.id,
     required this.title,
@@ -415,6 +418,7 @@ class HistoryFact implements ContentItem {
     this.month = 1,
     this.day = 1,
     this.year,
+    this.sourceUrl,
   });
 
   @override
@@ -427,6 +431,9 @@ class HistoryFact implements ContentItem {
         month: (d['month'] ?? 1) as int,
         day: (d['day'] ?? 1) as int,
         year: d['year'] as int?,
+        sourceUrl: (d['sourceUrl'] as String?)?.trim().isNotEmpty == true
+            ? (d['sourceUrl'] as String).trim()
+            : null,
       );
 
   @override
@@ -436,5 +443,6 @@ class HistoryFact implements ContentItem {
         'month': month,
         'day': day,
         'year': year,
+        'sourceUrl': sourceUrl,
       };
 }
