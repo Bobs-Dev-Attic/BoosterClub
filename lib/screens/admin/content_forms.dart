@@ -478,15 +478,20 @@ Future<FundingRequest?> editFunding(
                 validator: _required),
             _actions(
               key,
-              () => submit(FundingRequest(
-                id: r?.id ?? 'new',
-                title: title.text.trim(),
-                description: desc.text.trim(),
-                amountRequested: double.tryParse(amount.text) ?? 0,
-                requestedBy: by.text.trim(),
-                status: status,
-                submittedAt: r?.submittedAt ?? DateTime(2026, 7, 6),
-              )),
+              () => submit(
+                // Preserve the detailed application fields via copyWith when
+                // editing an existing request.
+                (r ??
+                        const FundingRequest(
+                            id: 'new', title: '', description: ''))
+                    .copyWith(
+                  title: title.text.trim(),
+                  description: desc.text.trim(),
+                  amountRequested: double.tryParse(amount.text) ?? 0,
+                  requestedBy: by.text.trim(),
+                  status: status,
+                ),
+              ),
             ),
           ],
         ),
