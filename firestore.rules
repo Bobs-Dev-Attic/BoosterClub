@@ -24,6 +24,11 @@ service cloud.firestore {
       return userRole() in ['administrator', 'webAdmin'];
     }
 
+    // Roles allowed to post meeting minutes.
+    function canPostMinutes() {
+      return userRole() in ['contributor', 'administrator', 'webAdmin'];
+    }
+
     function isWebAdmin() {
       return userRole() == 'webAdmin';
     }
@@ -46,7 +51,12 @@ service cloud.firestore {
     match /volunteering/{doc}  { allow read: if true; allow write: if canManageContent(); }
     match /sponsorships/{doc}  { allow read: if true; allow write: if canManageContent(); }
     match /fundraisers/{doc}   { allow read: if true; allow write: if canManageContent(); }
-    match /meetings/{doc}      { allow read: if true; allow write: if canManageContent(); }
+    // Contributors may add meeting minutes; editing/removing is manager-only.
+    match /meetings/{doc} {
+      allow read: if true;
+      allow create: if canPostMinutes();
+      allow update, delete: if canManageContent();
+    }
     match /faqs/{doc}          { allow read: if true; allow write: if canManageContent(); }
 
     // ---- Funding requests ---------------------------------------------
