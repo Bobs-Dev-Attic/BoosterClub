@@ -651,12 +651,6 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: geo,
-                decoration: _dec('Geolocation — latitude, longitude (optional)'),
-                validator: _optionalLatLng,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
                   controller: desc,
                   decoration: _dec('Description'),
                   maxLines: 3,
