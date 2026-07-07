@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../data/event_categories.dart';
 import '../../models/content_models.dart';
 import '../../services/firestore_service.dart';
+import '../../services/geocoding_service.dart';
 import '../../widgets/common.dart';
 
 /// A reusable modal form scaffold. [build] receives a submit callback that,
@@ -242,6 +243,186 @@ String? _optionalLatLng(String? v) {
   return null;
 }
 
+/// Result of the address-lookup dialog: a composed address string and, when the
+/// geocoder found a match, its coordinates.
+class _AddressLookupResult {
+  final String address;
+  final double? latitude;
+  final double? longitude;
+  const _AddressLookupResult(this.address, {this.latitude, this.longitude});
+}
+
+/// Opens a dialog to enter a US street address, then geocodes it via the U.S.
+/// Census geocoder to determine latitude/longitude. [initialStreet] pre-fills
+/// the street line (e.g. from the existing Location Address field).
+Future<_AddressLookupResult?> _addressLookupDialog(
+    BuildContext context, String initialStreet) {
+  return showDialog<_AddressLookupResult>(
+    context: context,
+    builder: (context) => _AddressLookupDialog(initialStreet: initialStreet),
+  );
+}
+
+class _AddressLookupDialog extends StatefulWidget {
+  final String initialStreet;
+  const _AddressLookupDialog({required this.initialStreet});
+
+  @override
+  State<_AddressLookupDialog> createState() => _AddressLookupDialogState();
+}
+
+class _AddressLookupDialogState extends State<_AddressLookupDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _street;
+  final _city = TextEditingController();
+  final _state = TextEditingController();
+  final _zip = TextEditingController();
+
+  bool _busy = false;
+  bool _noMatch = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _street = TextEditingController(text: widget.initialStreet);
+  }
+
+  @override
+  void dispose() {
+    _street.dispose();
+    _city.dispose();
+    _state.dispose();
+    _zip.dispose();
+    super.dispose();
+  }
+
+  String _composed() {
+    final cityStateZip = [
+      _city.text.trim(),
+      [_state.text.trim(), _zip.text.trim()]
+          .where((s) => s.isNotEmpty)
+          .join(' '),
+    ].where((s) => s.isNotEmpty).join(', ');
+    return [_street.text.trim(), cityStateZip]
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+  }
+
+  Future<void> _lookup() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+      _noMatch = false;
+    });
+    final navigator = Navigator.of(context);
+    final result = await GeocodingService().geocode(
+      street: _street.text.trim(),
+      city: _city.text.trim(),
+      state: _state.text.trim(),
+      zip: _zip.text.trim(),
+    );
+    if (!mounted) return;
+    if (result != null) {
+      navigator.pop(_AddressLookupResult(
+        result.matchedAddress.isNotEmpty ? result.matchedAddress : _composed(),
+        latitude: result.latitude,
+        longitude: result.longitude,
+      ));
+    } else {
+      setState(() {
+        _busy = false;
+        _noMatch = true;
+        _error =
+            'Could not find coordinates for that address (US addresses only). '
+            'Check the fields, or use the address without coordinates.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Find coordinates from address'),
+      content: SizedBox(
+        width: 460,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Enter a US street address. We\'ll look up its latitude and '
+                  'longitude using the free U.S. Census geocoder.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _street,
+                  decoration: _dec('Street address'),
+                  validator: _required,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(controller: _city, decoration: _dec('City')),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                          controller: _state,
+                          decoration: _dec('State (e.g. MD)')),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                          controller: _zip,
+                          decoration: _dec('ZIP'),
+                          keyboardType: TextInputType.number),
+                    ),
+                  ],
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_error!, style: const TextStyle(color: Colors.orange)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        if (_noMatch)
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () => Navigator.pop(
+                    context, _AddressLookupResult(_composed())),
+            child: const Text('Use address anyway'),
+          ),
+        FilledButton.icon(
+          onPressed: _busy ? null : _lookup,
+          icon: _busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.search, size: 18),
+          label: const Text('Find coordinates'),
+        ),
+      ],
+    );
+  }
+}
+
 /// Editor for a "This Day in Wildcat History" fact. [seed] pre-fills the form
 /// (e.g. from an On-This-Day suggestion).
 Future<HistoryFact?> editHistoryFact(BuildContext context, HistoryFact? h) {
@@ -430,7 +611,38 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
                   ),
                 ),
               const SizedBox(height: 12),
-              TextFormField(controller: loc, decoration: _dec('Location')),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                        controller: loc, decoration: _dec('Location Address')),
+                  ),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: IconButton.outlined(
+                      tooltip: 'Enter an address to find its coordinates',
+                      icon: const Icon(Icons.add_location_alt_outlined),
+                      onPressed: () async {
+                        final result = await _addressLookupDialog(
+                            context, loc.text.trim());
+                        if (result == null) return;
+                        setLocal(() {
+                          if (result.address.isNotEmpty) {
+                            loc.text = result.address;
+                          }
+                          if (result.latitude != null &&
+                              result.longitude != null) {
+                            geo.text =
+                                '${result.latitude}, ${result.longitude}';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: geo,

@@ -3,6 +3,14 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.12.1
+- **Look up event coordinates from an address.** The event editor's **Location**
+  field is renamed **Location Address** and gains a **📍 button** that opens an
+  address dialog (street, city, state, ZIP). On lookup, the address is geocoded
+  via the free **U.S. Census** geocoder (no API key) to auto-fill the
+  **Geolocation** latitude/longitude — with a fallback to use the typed address
+  without coordinates when there's no match (e.g. non-US addresses).
+
 ## 1.12.0
 - **Event geolocation.** Events can now carry optional **map coordinates**
   (latitude, longitude) alongside the free-text location. When set, the event
