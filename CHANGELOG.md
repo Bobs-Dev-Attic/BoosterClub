@@ -3,6 +3,13 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.7.0
+- **Light / Dark / Auto theme toggle** at the bottom of the navigation
+  (persisted on-device).
+- **Event CSV import** (Admin → Events → Import CSV): upload a .csv, map columns
+  to event fields, choose duplicate handling (Update / Replace / Skip / Allow),
+  then run the import and see a per-row log and summary report.
+
 ## 1.6.0
 - Left nav item renamed to **Funding Request**.
 - **Events** are now clickable — a detail dialog with **Share**, **Facebook/X**
