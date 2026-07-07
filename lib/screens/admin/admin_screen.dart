@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/common.dart';
 import 'content_forms.dart';
+import 'donations_admin.dart';
 import 'event_import.dart';
 import 'users_admin.dart';
 
@@ -58,6 +59,8 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
       if (can('manage_faqs'))
         _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
+      if (can('manage_donations'))
+        _AdminTab('Donations', Icons.favorite, (fs) => DonationsAdmin(fs: fs)),
       if (can('manage_users')) ...[
         _AdminTab('Users & Roles', Icons.manage_accounts,
             (fs) => UsersAdmin(fs: fs, actor: user)),
