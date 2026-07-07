@@ -3,6 +3,15 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.8.1
+- **Corporate Sponsorship page** rewritten to match the real program: a single
+  **one-year stadium banner** sponsorship (**$1,000/yr**). Adds the value-prop
+  banner ("Support WJ Boosters and Advertise Your Business"), a **Banner details**
+  card (3½ × 9 ft weather-resistant banner, sponsor-provided graphics, displayed
+  on the stadium fence, one-year term, post-payment approval process), and a
+  contact card that emails **sponsorship@wjboosterclub.org**. Seed data updated to
+  the single corporate tier.
+
 ## 1.8.0
 - **Role-based permissions & delegation.** Access is now governed by granular
   permissions per site area (events, volunteering, sponsors, fundraisers,
