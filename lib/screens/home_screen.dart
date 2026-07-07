@@ -118,11 +118,11 @@ class _Hero extends StatelessWidget {
           // Base fill so the tinted overlay always sits on green.
           const Positioned.fill(child: ColoredBox(color: AppTheme.green)),
           // Optional school photo behind the hero. Drop a JPG at
-          // assets/images/school.jpg to show the building faded/tinted; absent,
-          // it silently falls back to the plain green gradient.
+          // assets/images/wj-frontb.jpg to show the building faded/tinted;
+          // absent, it silently falls back to the plain green gradient.
           Positioned.fill(
             child: Image.asset(
-              'assets/images/school.jpg',
+              'assets/images/wj-frontb.jpg',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => const SizedBox.shrink(),
             ),

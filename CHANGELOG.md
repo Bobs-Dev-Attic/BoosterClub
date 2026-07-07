@@ -3,6 +3,10 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.4.1
+- Point the hero background at `assets/images/wj-frontb.jpg` (the school photo
+  filename). Add the file at that path to show the building behind the hero.
+
 ## 1.4.0
 - Fix stale-asset caching: all files now revalidate (no-cache) except versioned
   canvaskit, so new icon fonts / logos show up immediately after a deploy. This
