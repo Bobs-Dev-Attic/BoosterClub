@@ -3,6 +3,13 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.11.0
+- **Home layout**: on wide screens, **"This Day in Wildcat History"** now sits
+  **beside** the "Go Wildcats!" hero (filling the space to its right) and
+  matches its height; it stacks below the hero on narrow screens.
+- The history card gains a **faded, right-aligned Wildcat crest** watermark
+  (green-tinted so it reads in both light and dark themes).
+
 ## 1.10.1
 - **History facts can link to a source.** Added an optional **Source / more info
   URL** to history facts (both the admin editor and the home-page Manage dialog,

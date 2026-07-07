@@ -22,9 +22,32 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Hero(),
-          const SizedBox(height: 24),
-          const HistorySection(),
+          LayoutBuilder(
+            builder: (context, c) {
+              // On wide screens, put "This Day in Wildcat History" beside the
+              // hero to fill the space to its right; stack them when narrow.
+              if (c.maxWidth >= 900) {
+                return const IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(flex: 3, child: _Hero()),
+                      SizedBox(width: 20),
+                      Expanded(flex: 2, child: HistorySection(fill: true)),
+                    ],
+                  ),
+                );
+              }
+              return const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Hero(),
+                  SizedBox(height: 24),
+                  HistorySection(),
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 32),
           _QuickLinks(),
           const SizedBox(height: 32),
