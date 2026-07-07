@@ -12,7 +12,10 @@ import 'common.dart';
 /// "This Day in Wildcat History" — surfaces today's history fact (or a rotating
 /// one). Contributors get a manage button to add/edit/delete facts.
 class HistorySection extends StatelessWidget {
-  const HistorySection({super.key});
+  /// When true, the card stretches to fill its parent's height (used when it
+  /// sits beside the hero on wide screens).
+  final bool fill;
+  const HistorySection({super.key, this.fill = false});
 
   Future<void> _open(String url) async {
     final uri = Uri.tryParse(url);
@@ -43,18 +46,38 @@ class HistorySection extends StatelessWidget {
         final facts = snap.data ?? const <HistoryFact>[];
         final fact = _pick(facts);
         if (fact == null && !canManage) return const SizedBox.shrink();
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: AppTheme.green.withValues(alpha: 0.4)),
-            color: AppTheme.green.withValues(alpha: 0.06),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            width: double.infinity,
+            height: fill ? double.infinity : null,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.green.withValues(alpha: 0.4)),
+              color: AppTheme.green.withValues(alpha: 0.06),
+            ),
+            child: Stack(
+              children: [
+                // Faded, right-aligned Wildcat crest watermark.
+                Positioned(
+                  top: -12,
+                  bottom: -12,
+                  right: -28,
+                  child: Opacity(
+                    opacity: 0.09,
+                    child: Image.asset(
+                      'assets/images/wj_logo.png',
+                      fit: BoxFit.contain,
+                      color: AppTheme.green,
+                      colorBlendMode: BlendMode.srcIn,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               Row(
                 children: [
                   const Icon(Icons.auto_stories, color: AppTheme.green),
@@ -119,7 +142,11 @@ class HistorySection extends StatelessWidget {
                   ),
                 ],
               ],
-            ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
