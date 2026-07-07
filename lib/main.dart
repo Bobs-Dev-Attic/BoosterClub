@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'config/app_config.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
@@ -46,14 +47,17 @@ class BoosterClubApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(authService),
         ),
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp.router(
-        title: AppConfig.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: ThemeMode.system,
-        routerConfig: router,
+      child: Consumer<ThemeProvider>(
+        builder: (context, theme, _) => MaterialApp.router(
+          title: AppConfig.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: theme.mode,
+          routerConfig: router,
+        ),
       ),
     );
   }

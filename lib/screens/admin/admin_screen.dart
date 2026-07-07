@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/common.dart';
 import 'content_forms.dart';
+import 'event_import.dart';
 
 /// Admin dashboard. Visible to Administrators and Web Admins. Lets managers
 /// create, edit and delete content across every collection.
@@ -177,12 +178,14 @@ class _AdminList<T extends ContentItem> extends StatelessWidget {
   final FirestoreService fs;
   final String Function(T) subtitle;
   final Future<T?> Function(BuildContext, T?) editor;
+  final Widget? extraAction;
   const _AdminList({
     required this.collection,
     required this.stream,
     required this.fs,
     required this.subtitle,
     required this.editor,
+    this.extraAction,
   });
 
   Future<void> _edit(BuildContext context, T? existing) async {
@@ -198,13 +201,19 @@ class _AdminList<T extends ContentItem> extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: () => _edit(context, null),
-              icon: const Icon(Icons.add),
-              label: const Text('Add new'),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (extraAction != null) ...[
+                extraAction!,
+                const SizedBox(width: 8),
+              ],
+              FilledButton.icon(
+                onPressed: () => _edit(context, null),
+                icon: const Icon(Icons.add),
+                label: const Text('Add new'),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           StreamListView<T>(
@@ -281,6 +290,14 @@ class _EventsAdmin extends StatelessWidget {
         fs: fs,
         subtitle: (e) => e.description,
         editor: editEvent,
+        extraAction: OutlinedButton.icon(
+          onPressed: () => showDialog(
+            context: context,
+            builder: (_) => EventImportDialog(fs: fs),
+          ),
+          icon: const Icon(Icons.upload_file, size: 18),
+          label: const Text('Import CSV'),
+        ),
       );
 }
 

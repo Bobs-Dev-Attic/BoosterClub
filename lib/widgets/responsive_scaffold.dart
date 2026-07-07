@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import 'nav_destinations.dart';
 
@@ -193,6 +194,8 @@ class _RailFooter extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 8),
+        ThemeToggle(compact: !extended),
+        const SizedBox(height: 8),
         Text(
           'v${AppConfig.appVersion}',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -376,6 +379,10 @@ class _MobileDrawer extends StatelessWidget {
                   auth.signOut();
                 },
               ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ThemeToggle(compact: false),
+            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 12, top: 4),
               child: Text(
@@ -389,6 +396,59 @@ class _MobileDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Light / dark / system theme switcher shown at the bottom of the navigation.
+class ThemeToggle extends StatelessWidget {
+  final bool compact;
+  const ThemeToggle({super.key, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>();
+    const options = [
+      (ThemeMode.light, Icons.light_mode, 'Light'),
+      (ThemeMode.dark, Icons.dark_mode, 'Dark'),
+      (ThemeMode.system, Icons.brightness_auto, 'Auto'),
+    ];
+
+    if (compact) {
+      // Cycle light -> dark -> system on tap.
+      final icon = switch (theme.mode) {
+        ThemeMode.light => Icons.light_mode,
+        ThemeMode.dark => Icons.dark_mode,
+        ThemeMode.system => Icons.brightness_auto,
+      };
+      final next = switch (theme.mode) {
+        ThemeMode.light => ThemeMode.dark,
+        ThemeMode.dark => ThemeMode.system,
+        ThemeMode.system => ThemeMode.light,
+      };
+      return IconButton(
+        tooltip: 'Theme: ${theme.mode.name}',
+        icon: Icon(icon),
+        onPressed: () => theme.setMode(next),
+      );
+    }
+
+    return SegmentedButton<ThemeMode>(
+      showSelectedIcon: false,
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      segments: [
+        for (final o in options)
+          ButtonSegment(
+            value: o.$1,
+            icon: Icon(o.$2, size: 18),
+            tooltip: o.$3,
+          ),
+      ],
+      selected: {theme.mode},
+      onSelectionChanged: (s) => theme.setMode(s.first),
     );
   }
 }
