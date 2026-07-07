@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/local_history.dart';
 import '../../models/content_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
+import '../../services/history_suggestions_service.dart';
 import '../../widgets/common.dart';
 import 'content_forms.dart';
 import 'donations_admin.dart';
@@ -59,6 +61,8 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
       if (can('manage_faqs'))
         _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
+      if (can('manage_history'))
+        _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
       if (can('manage_donations'))
         _AdminTab('Donations', Icons.favorite, (fs) => DonationsAdmin(fs: fs)),
       if (can('manage_users')) ...[
@@ -413,4 +417,241 @@ class _FaqAdmin extends StatelessWidget {
         subtitle: (q) => q.answer,
         editor: editFaq,
       );
+}
+
+class _HistoryAdmin extends StatelessWidget {
+  final FirestoreService fs;
+  const _HistoryAdmin(this.fs);
+
+  static final _md = DateFormat('MMM d');
+
+  @override
+  Widget build(BuildContext context) => _AdminList<HistoryFact>(
+        collection: 'history_facts',
+        stream: fs.historyFacts(),
+        fs: fs,
+        subtitle: (h) =>
+            '${_md.format(DateTime(2000, h.month, h.day))}'
+            '${h.year != null ? ', ${h.year}' : ''} · ${h.fact}',
+        editor: editHistoryFact,
+        extraAction: Wrap(
+          spacing: 8,
+          children: [
+            _LocalPackButton(fs: fs),
+            OutlinedButton.icon(
+              onPressed: () => showDialog(
+                context: context,
+                builder: (_) => _OnThisDayDialog(fs: fs),
+              ),
+              icon: const Icon(Icons.travel_explore, size: 18),
+              label: const Text('On This Day'),
+            ),
+          ],
+        ),
+      );
+}
+
+/// One-click import of the built-in local Bethesda / Montgomery County / WJ
+/// history pack. Skips facts that already exist (matched by id).
+class _LocalPackButton extends StatefulWidget {
+  final FirestoreService fs;
+  const _LocalPackButton({required this.fs});
+
+  @override
+  State<_LocalPackButton> createState() => _LocalPackButtonState();
+}
+
+class _LocalPackButtonState extends State<_LocalPackButton> {
+  bool _busy = false;
+
+  Future<void> _import() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final existing = await widget.fs.historyFacts().first;
+      final ids = existing.map((e) => e.id).toSet();
+      var added = 0;
+      for (final f in LocalHistory.pack()) {
+        if (ids.contains(f.id)) continue;
+        await widget.fs.upsert('history_facts', f);
+        added++;
+      }
+      messenger.showSnackBar(SnackBar(
+          content: Text(added == 0
+              ? 'Local history pack already imported.'
+              : 'Added $added local history fact(s).')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+        onPressed: _busy ? null : _import,
+        icon: _busy
+            ? const SizedBox(
+                width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.place, size: 18),
+        label: const Text('Local pack'),
+      );
+}
+
+/// Pulls "On This Day" suggestions from an external feed for a chosen date and
+/// lets a Contributor turn one into a local history fact.
+class _OnThisDayDialog extends StatefulWidget {
+  final FirestoreService fs;
+  const _OnThisDayDialog({required this.fs});
+
+  @override
+  State<_OnThisDayDialog> createState() => _OnThisDayDialogState();
+}
+
+class _OnThisDayDialogState extends State<_OnThisDayDialog> {
+  final _svc = HistorySuggestionsService();
+  DateTime _date = DateTime.now();
+  bool _marylandOnly = false;
+  bool _loading = false;
+  bool _fetched = false;
+  List<OnThisDayEvent> _events = const [];
+
+  Future<void> _fetch() async {
+    setState(() => _loading = true);
+    final events =
+        await _svc.fetch(_date.month, _date.day, marylandOnly: _marylandOnly);
+    if (!mounted) return;
+    setState(() {
+      _events = events;
+      _loading = false;
+      _fetched = true;
+    });
+  }
+
+  Future<void> _use(OnThisDayEvent e) async {
+    final seeded = HistoryFact(
+      id: 'new',
+      title: 'On this day, ${e.year ?? ''}'.trim(),
+      fact: e.description,
+      month: _date.month,
+      day: _date.day,
+      year: e.year,
+    );
+    final saved = await editHistoryFact(context, seeded);
+    if (saved != null) {
+      await widget.fs.upsert('history_facts', saved);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('History fact added.')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('On This Day — suggestions'),
+      content: SizedBox(
+        width: 480,
+        height: 460,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'General world/US history from a public feed (Wikipedia-based). '
+              'There is no dedicated Bethesda/WJ history API — use the “Maryland '
+              'only” filter to spot local ties, or the Local pack button for '
+              'built-in local facts.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(
+                            DateTime.now().year, _date.month, _date.day),
+                        firstDate: DateTime(DateTime.now().year, 1, 1),
+                        lastDate: DateTime(DateTime.now().year, 12, 31),
+                      );
+                      if (picked != null) {
+                        setState(() => _date =
+                            DateTime(2000, picked.month, picked.day));
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date',
+                        prefixIcon: Icon(Icons.calendar_today, size: 18),
+                        isDense: true,
+                      ),
+                      child: Text(DateFormat('MMMM d').format(_date)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _loading ? null : _fetch,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.search, size: 18),
+                  label: const Text('Fetch'),
+                ),
+              ],
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Maryland / Montgomery County only'),
+              value: _marylandOnly,
+              onChanged: (v) => setState(() => _marylandOnly = v),
+            ),
+            const Divider(),
+            Expanded(
+              child: !_fetched
+                  ? const Center(
+                      child: Text('Pick a date and tap Fetch.'))
+                  : _events.isEmpty
+                      ? const Center(
+                          child: Text(
+                              'No suggestions (feed unreachable or nothing '
+                              'matched the filter). You can still add a fact '
+                              'manually.',
+                              textAlign: TextAlign.center))
+                      : ListView.separated(
+                          itemCount: _events.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final e = _events[i];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                  '${e.year != null ? '${e.year} — ' : ''}${e.description}',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                              trailing: TextButton(
+                                onPressed: () => _use(e),
+                                child: const Text('Use'),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
 }

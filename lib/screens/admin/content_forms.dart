@@ -216,6 +216,78 @@ Widget _actions(GlobalKey<FormState> key, VoidCallback onSave) => Padding(
 String? _required(String? v) =>
     (v == null || v.trim().isEmpty) ? 'Required' : null;
 
+/// Editor for a "This Day in Wildcat History" fact. [seed] pre-fills the form
+/// (e.g. from an On-This-Day suggestion).
+Future<HistoryFact?> editHistoryFact(BuildContext context, HistoryFact? h) {
+  final title = TextEditingController(text: h?.title);
+  final fact = TextEditingController(text: h?.fact);
+  final year = TextEditingController(text: h?.year?.toString() ?? '');
+  final now = DateTime.now();
+  var date = DateTime(2000, h?.month ?? now.month, h?.day ?? now.day);
+  return _formDialog<HistoryFact>(
+    context,
+    title: h == null ? 'New History Fact' : 'Edit History Fact',
+    build: (key, submit) => Form(
+      key: key,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+              controller: title,
+              decoration: _dec('Title'),
+              validator: _required),
+          const SizedBox(height: 12),
+          StatefulBuilder(
+            builder: (context, setLocal) => InkWell(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime(now.year, date.month, date.day),
+                  firstDate: DateTime(now.year, 1, 1),
+                  lastDate: DateTime(now.year, 12, 31),
+                  helpText: 'Pick the month & day this fact belongs to',
+                );
+                if (picked != null) {
+                  setLocal(() => date = DateTime(2000, picked.month, picked.day));
+                }
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Month & day',
+                  prefixIcon: Icon(Icons.calendar_today, size: 18),
+                ),
+                child: Text(DateFormat('MMMM d').format(date)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: year,
+              decoration: _dec('Year (optional)'),
+              keyboardType: TextInputType.number),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: fact,
+              decoration: _dec('Fact'),
+              maxLines: 4,
+              validator: _required),
+          _actions(
+            key,
+            () => submit(HistoryFact(
+              id: h?.id ?? 'new',
+              title: title.text.trim(),
+              fact: fact.text.trim(),
+              month: date.month,
+              day: date.day,
+              year: int.tryParse(year.text.trim()),
+            )),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 // ---- Event ---------------------------------------------------------------
 Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
   final title = TextEditingController(text: e?.title);

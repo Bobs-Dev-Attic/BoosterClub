@@ -3,6 +3,20 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.10.0
+- **Fix missing Admin Dashboard icons** (Users & Roles, Audit Log, Import CSV).
+  The web build now ships the full Material icon font (`--no-tree-shake-icons`)
+  so no glyph can go blank after an update from a stale cached icon subset.
+- **New History Facts admin section** (Admin → History, needs `manage_history`):
+  add / edit / delete "This Day in Wildcat History" facts in one place.
+- **Built-in local history pack**: one-click import of curated, real Bethesda /
+  Montgomery County / Walter Johnson facts — so there's local content even
+  before anyone adds their own.
+- **"On This Day" external suggestions**: fetch general (Wikipedia-derived)
+  history for any date from a public feed, with a **Maryland / Montgomery County
+  only** filter, and turn a suggestion into a local fact. (There is no dedicated
+  hyperlocal Bethesda/WJ history API; this is an assist for curation.)
+
 ## 1.9.0
 - **Donations via PayPal, recorded in Firestore.** The Donate button now writes
   a **pending** donation to a new `donations` collection, then sends the donor to
