@@ -3,6 +3,18 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.8.0
+- **Role-based permissions & delegation.** Access is now governed by granular
+  permissions per site area (events, volunteering, sponsors, fundraisers,
+  meetings, FAQ, funding, history, seeding, users). A base role grants defaults;
+  a **Web Admin** can also **delegate** individual permissions to any user, with
+  an **optional expiry** (temporary access).
+- New **Users & Roles** admin tab (Web Admin) to set roles and grants; the admin
+  dashboard now shows only the sections a user may manage.
+- **Audit log**: every role/permission change is recorded in Firestore
+  (`audit_log`) and viewable in a new Audit Log tab.
+- Firestore rules rewritten to enforce permissions + active (non-expired) grants.
+
 ## 1.7.0
 - **Light / Dark / Auto theme toggle** at the bottom of the navigation
   (persisted on-device).

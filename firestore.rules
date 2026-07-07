@@ -3,9 +3,11 @@ rules_version = '2';
 // Security rules for the Booster Club app.
 //
 // Content collections are publicly readable so guests can browse. Writes are
-// restricted by role, which is stored on each user's profile document at
-// /users/{uid}.role. Roles (ascending privilege):
-//   guest < supporter < member < sponsor < administrator < webAdmin
+// gated by granular PERMISSIONS. A user's effective permissions come from their
+// base role plus delegated grants (a map of permission -> expiry Timestamp on
+// their /users/{uid} doc); a grant is active only while its expiry is in the
+// future. Web Admins assign roles and grants and every change is written to
+// /audit_log.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -13,74 +15,79 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function userRole() {
-      return isSignedIn()
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
-        : 'guest';
-    }
-
-    // Roles allowed to manage content.
-    function canManageContent() {
-      return userRole() in ['administrator', 'webAdmin'];
-    }
-
-    // Roles allowed to post meeting minutes.
-    function canPostMinutes() {
-      return userRole() in ['contributor', 'administrator', 'webAdmin'];
+      return isSignedIn() ? userData().role : 'guest';
     }
 
     function isWebAdmin() {
       return userRole() == 'webAdmin';
     }
 
+    // Does the base role grant [perm]?
+    function roleGrants(role, perm) {
+      return role == 'webAdmin'
+        || (role == 'administrator' && perm != 'manage_users')
+        || (role == 'contributor' && (perm == 'manage_meetings' || perm == 'manage_history'));
+    }
+
+    // Is there an active (non-expired) delegated grant for [perm]?
+    function hasActiveGrant(perm) {
+      let g = userData().grants;
+      return g != null && perm in g && g[perm] > request.time;
+    }
+
+    // Effective permission check.
+    function hasPerm(perm) {
+      return isSignedIn() && (roleGrants(userRole(), perm) || hasActiveGrant(perm));
+    }
+
     // ---- User profiles -------------------------------------------------
     match /users/{uid} {
       allow read: if isSignedIn();
-      // A user may create/update their own profile, but may NOT elevate their
-      // own role — only a web admin can change roles.
+      // First sign-in creates a base profile (no elevated role/grants).
       allow create: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.role in ['supporter', 'member', 'sponsor'];
+      // A user may edit their own profile but may NOT change their role or
+      // delegated grants (only a Web Admin can).
       allow update: if isSignedIn() && request.auth.uid == uid
-        && request.resource.data.role == resource.data.role;
-      // Web admins can manage any profile (including roles).
-      allow read, write: if isWebAdmin();
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.get('grants', {}) == resource.data.get('grants', {});
+      // Web Admins (manage_users) can manage any profile, roles and grants.
+      allow read, write: if hasPerm('manage_users');
     }
 
-    // ---- Publicly browsable content, admin-managed ---------------------
-    match /events/{doc}        { allow read: if true; allow write: if canManageContent(); }
-    match /volunteering/{doc}  { allow read: if true; allow write: if canManageContent(); }
-    match /sponsorships/{doc}  { allow read: if true; allow write: if canManageContent(); }
-    match /fundraisers/{doc}   { allow read: if true; allow write: if canManageContent(); }
-    // Contributors may add meeting minutes; editing/removing is manager-only.
-    match /meetings/{doc} {
-      allow read: if true;
-      allow create: if canPostMinutes();
-      allow update, delete: if canManageContent();
+    // ---- Audit log -----------------------------------------------------
+    // Append-only: only user managers may create or read; never update/delete.
+    match /audit_log/{doc} {
+      allow read: if hasPerm('manage_users');
+      allow create: if hasPerm('manage_users')
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
     }
-    match /faqs/{doc}          { allow read: if true; allow write: if canManageContent(); }
 
-    // "This day in history" facts — contributors and managers may edit.
-    match /history_facts/{doc} {
-      allow read: if true;
-      allow write: if canPostMinutes();
-    }
+    // ---- Publicly browsable content, permission-managed ----------------
+    match /events/{doc}        { allow read: if true; allow write: if hasPerm('manage_events'); }
+    match /volunteering/{doc}  { allow read: if true; allow write: if hasPerm('manage_volunteering'); }
+    match /sponsorships/{doc}  { allow read: if true; allow write: if hasPerm('manage_sponsorships'); }
+    match /fundraisers/{doc}   { allow read: if true; allow write: if hasPerm('manage_fundraisers'); }
+    match /meetings/{doc}      { allow read: if true; allow write: if hasPerm('manage_meetings'); }
+    match /faqs/{doc}          { allow read: if true; allow write: if hasPerm('manage_faqs'); }
+    match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
 
     // ---- Funding requests ---------------------------------------------
-    // Anyone may read. Members and above may submit. Only content managers may
+    // Anyone may read. Members and above may submit. Only funding managers may
     // update status or delete.
     match /funding_requests/{doc} {
       allow read: if true;
       allow create: if userRole() in ['member', 'contributor', 'sponsor', 'administrator', 'webAdmin'];
-      allow update, delete: if canManageContent();
+      allow update, delete: if hasPerm('manage_funding');
     }
 
     // ---- QR sign-in pairing sessions ----------------------------------
-    // Created (unauthenticated) by the device that wants to sign in; read by
-    // that same device while it polls for approval; approved only by the
-    // `approveQrSignIn` Cloud Function (Admin SDK, which bypasses these rules).
-    // The document id is an unguessable bearer secret and sessions are short
-    // lived, so client updates are forbidden and only creation of a bare
-    // pending session is allowed.
     match /qr_sessions/{id} {
       allow create: if request.resource.data.keys().hasOnly(['status', 'createdAt'])
         && request.resource.data.status == 'pending';
@@ -91,7 +98,7 @@ service cloud.firestore {
 
     // ---- Volunteer sign-ups (per user) --------------------------------
     match /signups/{doc} {
-      allow read: if canManageContent()
+      allow read: if hasPerm('manage_volunteering')
         || (isSignedIn() && resource.data.uid == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;

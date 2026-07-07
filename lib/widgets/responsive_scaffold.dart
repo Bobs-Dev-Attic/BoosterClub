@@ -162,7 +162,7 @@ class _RailFooter extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (user != null && user.role.canManageContent)
+        if (user != null && user.canManageAny)
           IconButton(
             tooltip: 'Admin dashboard',
             icon: const Icon(Icons.admin_panel_settings_outlined),
@@ -265,7 +265,7 @@ class _AuthAction extends StatelessWidget {
           value: 'profile',
           child: _MenuRow(Icons.person_outline, user.displayName),
         ),
-        if (user.role.canManageContent)
+        if (user.canManageAny)
           const PopupMenuItem(
             value: 'admin',
             child: _MenuRow(Icons.admin_panel_settings_outlined, 'Admin'),
@@ -348,7 +348,7 @@ class _MobileDrawer extends StatelessWidget {
                         context.go(kSections[i].route);
                       },
                     ),
-                  if (auth.user?.role.canManageContent ?? false)
+                  if (auth.user?.canManageAny ?? false)
                     ListTile(
                       leading: const Icon(Icons.admin_panel_settings_outlined),
                       title: const Text('Admin dashboard'),

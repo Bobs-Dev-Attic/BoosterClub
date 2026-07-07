@@ -9,6 +9,7 @@ import '../../services/firestore_service.dart';
 import '../../widgets/common.dart';
 import 'content_forms.dart';
 import 'event_import.dart';
+import 'users_admin.dart';
 
 /// Admin dashboard. Visible to Administrators and Web Admins. Lets managers
 /// create, edit and delete content across every collection.
@@ -19,7 +20,7 @@ class AdminScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
-    if (user == null || !user.role.canManageContent) {
+    if (user == null || !user.canManageAny) {
       return PageBody(
         maxWidth: 480,
         child: Column(
@@ -28,7 +29,7 @@ class AdminScreen extends StatelessWidget {
             const EmptyState(
               icon: Icons.lock_outline,
               message:
-                  'You need Administrator access to view this page.',
+                  'You don\'t have permission to manage any part of the site.',
             ),
             FilledButton(
               onPressed: () => context.go('/'),
@@ -39,18 +40,43 @@ class AdminScreen extends StatelessWidget {
       );
     }
 
+    // Only show the tabs the user is permitted to manage.
+    bool can(String p) => user.can(p);
     final tabs = <_AdminTab>[
-      _AdminTab('Events', Icons.event, (fs) => _EventsAdmin(fs)),
-      _AdminTab('Volunteering', Icons.volunteer_activism,
-          (fs) => _VolunteerAdmin(fs)),
-      _AdminTab('Sponsors', Icons.handshake, (fs) => _SponsorAdmin(fs)),
-      _AdminTab('Funding', Icons.request_quote, (fs) => _FundingAdmin(fs)),
-      _AdminTab('Fundraisers', Icons.savings, (fs) => _FundraiserAdmin(fs)),
-      _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
-      _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
+      if (can('manage_events'))
+        _AdminTab('Events', Icons.event, (fs) => _EventsAdmin(fs)),
+      if (can('manage_volunteering'))
+        _AdminTab('Volunteering', Icons.volunteer_activism,
+            (fs) => _VolunteerAdmin(fs)),
+      if (can('manage_sponsorships'))
+        _AdminTab('Sponsors', Icons.handshake, (fs) => _SponsorAdmin(fs)),
+      if (can('manage_funding'))
+        _AdminTab('Funding', Icons.request_quote, (fs) => _FundingAdmin(fs)),
+      if (can('manage_fundraisers'))
+        _AdminTab('Fundraisers', Icons.savings, (fs) => _FundraiserAdmin(fs)),
+      if (can('manage_meetings'))
+        _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
+      if (can('manage_faqs'))
+        _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
+      if (can('manage_users')) ...[
+        _AdminTab('Users & Roles', Icons.manage_accounts,
+            (fs) => UsersAdmin(fs: fs, actor: user)),
+        _AdminTab('Audit Log', Icons.history, (fs) => AuditLogView(fs: fs)),
+      ],
     ];
 
     final fs = context.read<FirestoreService>();
+    if (tabs.isEmpty) {
+      return const PageBody(
+        maxWidth: 480,
+        child: Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: EmptyState(
+              icon: Icons.info_outline,
+              message: 'You have no manageable sections assigned yet.'),
+        ),
+      );
+    }
     return DefaultTabController(
       length: tabs.length,
       child: Column(
@@ -69,8 +95,10 @@ class AdminScreen extends StatelessWidget {
                       Text('Admin Dashboard',
                           style: Theme.of(context).textTheme.titleLarge),
                       const Spacer(),
-                      _SeedButton(fs: fs),
-                      const SizedBox(width: 12),
+                      if (user.can('seed_content')) ...[
+                        _SeedButton(fs: fs),
+                        const SizedBox(width: 12),
+                      ],
                       Pill(user.role.label, icon: Icons.badge_outlined),
                     ],
                   ),
