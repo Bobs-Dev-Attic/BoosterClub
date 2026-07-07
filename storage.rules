@@ -26,5 +26,14 @@ service firebase.storage {
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+
+    // Shared media library: publicly readable; only Contributors and content
+    // managers may upload, and only images up to 10 MB.
+    match /gallery/{file} {
+      allow read: if true;
+      allow write: if role() in ['contributor', 'administrator', 'webAdmin']
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
   }
 }

@@ -23,5 +23,7 @@ const List<AppSection> kSections = [
   AppSection('Fundraisers', '/fundraisers', Icons.savings_outlined,
       Icons.savings),
   AppSection('Meetings', '/meetings', Icons.groups_outlined, Icons.groups),
+  AppSection('Gallery', '/gallery', Icons.photo_library_outlined,
+      Icons.photo_library),
   AppSection('FAQ', '/faq', Icons.help_outline, Icons.help),
 ];

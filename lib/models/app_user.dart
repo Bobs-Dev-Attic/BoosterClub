@@ -10,7 +10,7 @@ Set<String> rolePermissions(UserRole role) {
     case UserRole.administrator:
       return kPermissions.where((p) => p != 'manage_users').toSet();
     case UserRole.contributor:
-      return {'manage_meetings', 'manage_history'};
+      return {'manage_meetings', 'manage_history', 'manage_gallery'};
     default:
       return {};
   }

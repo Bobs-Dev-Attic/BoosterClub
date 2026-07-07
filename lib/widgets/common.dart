@@ -172,6 +172,36 @@ class EmptyState extends StatelessWidget {
   }
 }
 
+/// Renders an image from either a bundled asset path (one starting with
+/// `assets/`) or a remote URL, with a graceful placeholder on error.
+class MediaImage extends StatelessWidget {
+  final String url;
+  final BoxFit fit;
+  final double? width;
+  final double? height;
+  const MediaImage(this.url,
+      {super.key, this.fit = BoxFit.cover, this.width, this.height});
+
+  Widget _error(BuildContext context, Object error, StackTrace? stack) =>
+      Container(
+        width: width,
+        height: height,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
+        child: Icon(Icons.broken_image_outlined,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(url,
+          fit: fit, width: width, height: height, errorBuilder: _error);
+    }
+    return Image.network(url,
+        fit: fit, width: width, height: height, errorBuilder: _error);
+  }
+}
+
 /// A small rounded pill / badge.
 class Pill extends StatelessWidget {
   final String text;

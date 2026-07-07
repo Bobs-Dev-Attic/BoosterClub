@@ -28,6 +28,8 @@ class DemoData {
           startsAt: _at(45, 16, 0),
           endsAt: _at(45, 22, 0),
           location: 'Memorial Stadium',
+          latitude: 39.0349,
+          longitude: -77.1136,
           category: 'Athletics',
         ),
         SchoolEvent(
@@ -54,6 +56,7 @@ class DemoData {
           title: 'Professional Day — No School',
           description: 'Schools closed for students; staff professional development.',
           startsAt: _at(28, 0, 0),
+          allDay: true,
           location: 'District-wide',
           category: 'School Holiday',
         ),
@@ -276,6 +279,25 @@ class DemoData {
               'The Booster Club was formed by parents and community members to fund uniforms, equipment, scholarships and program grants for WJ students.',
           month: 7,
           day: 6,
+        ),
+      ];
+
+  static List<GalleryImage> gallery() => [
+        GalleryImage(
+          id: 'g1',
+          title: 'Walter Johnson High School',
+          imageUrl: 'assets/images/wj-frontb.jpg',
+          caption: 'The front of the WJ building on a fall afternoon.',
+          tags: const ['campus', 'school'],
+          uploadedAt: _future(-2),
+        ),
+        GalleryImage(
+          id: 'g2',
+          title: 'Wildcats Crest',
+          imageUrl: 'assets/images/wj_logo.png',
+          caption: 'Official Walter Johnson Wildcats logo.',
+          tags: const ['logo', 'branding'],
+          uploadedAt: _future(-5),
         ),
       ];
 }
