@@ -3,6 +3,12 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.3.1
+- Fix: Contributors got `permission-denied` when posting minutes because the
+  Firestore rules only let admins write to `meetings`. Rules now allow the
+  Contributor role to create meeting entries (edit/delete stay manager-only).
+  Requires deploying `firebase deploy --only firestore:rules`.
+
 ## 1.3.0
 - Left navigation rail icons now show hover **tooltips**.
 - Loading splash shows the **logo** instead of a paw.
