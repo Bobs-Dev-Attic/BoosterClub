@@ -135,6 +135,23 @@ class FirestoreService {
     return task.ref.getDownloadURL();
   }
 
+  /// Uploads an image (e.g. a photo attached to a funding request) under
+  /// [folder] and returns its download URL. In demo mode returns a placeholder.
+  Future<String> uploadImage(
+      Uint8List bytes, String filename, String folder, int stamp,
+      {String contentType = 'image/jpeg'}) async {
+    final safe = filename.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    if (AppConfig.demoMode) {
+      return 'https://example.com/$folder/$safe';
+    }
+    final ref = FirebaseStorage.instance.ref('$folder/${stamp}_$safe');
+    final task = await ref.putData(
+      bytes,
+      SettableMetadata(contentType: contentType),
+    );
+    return task.ref.getDownloadURL();
+  }
+
   /// Writes the bundled sample content into every collection. Used by admins
   /// to populate a fresh database. Idempotent: documents keep their demo IDs so
   /// re-running overwrites rather than duplicating.

@@ -186,6 +186,15 @@ class _Hero extends StatelessWidget {
                 icon: const Icon(Icons.volunteer_activism),
                 label: const Text('Volunteer'),
               ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                ),
+                onPressed: () => context.go('/funding'),
+                icon: const Icon(Icons.request_quote),
+                label: const Text('Funding Request'),
+              ),
               if (!auth.isSignedIn)
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(

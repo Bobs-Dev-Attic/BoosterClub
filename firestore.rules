@@ -64,7 +64,7 @@ service cloud.firestore {
     // update status or delete.
     match /funding_requests/{doc} {
       allow read: if true;
-      allow create: if userRole() in ['member', 'sponsor', 'administrator', 'webAdmin'];
+      allow create: if userRole() in ['member', 'contributor', 'sponsor', 'administrator', 'webAdmin'];
       allow update, delete: if canManageContent();
     }
 

@@ -3,6 +3,16 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.4.0
+- Fix stale-asset caching: all files now revalidate (no-cache) except versioned
+  canvaskit, so new icon fonts / logos show up immediately after a deploy. This
+  fixes the invisible "Post minutes" button icon.
+- Home hero adds a **Funding Request** button that opens the Funding page.
+- Funding request form lets you attach a **photo** — choose from the library or
+  **take one with the camera** (image_picker). Photos upload to Storage and show
+  on the request card. Storage rules allow signed-in members to upload funding
+  images; contributors can now also submit funding requests.
+
 ## 1.3.1
 - Fix: Contributors got `permission-denied` when posting minutes because the
   Firestore rules only let admins write to `meetings`. Rules now allow the

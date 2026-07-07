@@ -156,6 +156,7 @@ class FundingRequest implements ContentItem {
   final String requestedBy;
   final String status; // pending / approved / declined / funded
   final DateTime? submittedAt;
+  final String? imageUrl;
 
   const FundingRequest({
     required this.id,
@@ -165,6 +166,7 @@ class FundingRequest implements ContentItem {
     this.requestedBy = '',
     this.status = 'pending',
     this.submittedAt,
+    this.imageUrl,
   });
 
   @override
@@ -179,6 +181,7 @@ class FundingRequest implements ContentItem {
         requestedBy: d['requestedBy'] ?? '',
         status: d['status'] ?? 'pending',
         submittedAt: _ts(d['submittedAt']),
+        imageUrl: d['imageUrl'],
       );
 
   @override
@@ -188,6 +191,7 @@ class FundingRequest implements ContentItem {
         'amountRequested': amountRequested,
         'requestedBy': requestedBy,
         'status': status,
+        'imageUrl': imageUrl,
         'submittedAt':
             submittedAt != null ? Timestamp.fromDate(submittedAt!) : FieldValue.serverTimestamp(),
       };
