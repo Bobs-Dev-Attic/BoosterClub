@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/event_categories.dart';
 import '../../models/content_models.dart';
 
 /// A reusable modal form scaffold. [build] receives a submit callback that,
@@ -222,6 +223,7 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
   final loc = TextEditingController(text: e?.location);
   DateTime? start = e?.startsAt;
   DateTime? end = e?.endsAt;
+  String category = e?.category ?? 'General';
   return _formDialog<SchoolEvent>(
     context,
     title: e == null ? 'New Event' : 'Edit Event',
@@ -241,6 +243,7 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
             location: loc.text.trim(),
             startsAt: start,
             endsAt: end,
+            category: category,
           ));
         }
 
@@ -253,6 +256,16 @@ Future<SchoolEvent?> editEvent(BuildContext context, SchoolEvent? e) {
                   controller: title,
                   decoration: _dec('Title'),
                   validator: _required),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: category,
+                decoration: _dec('Category'),
+                items: [
+                  for (final c in kEventCategories)
+                    DropdownMenuItem(value: c.key, child: Text(c.key)),
+                ],
+                onChanged: (v) => setLocal(() => category = v ?? category),
+              ),
               const SizedBox(height: 12),
               _DateTimePicker(
                   label: 'Start Date',

@@ -29,6 +29,7 @@ class FirestoreService {
     _demo['fundraisers'] = List.of(DemoData.fundraisers());
     _demo['meetings'] = List.of(DemoData.meetings());
     _demo['faqs'] = List.of(DemoData.faqs());
+    _demo['history_facts'] = List.of(DemoData.historyFacts());
   }
 
   StreamController<List<ContentItem>> _controllerFor(String c) {
@@ -84,6 +85,9 @@ class FirestoreService {
 
   Stream<List<FaqItem>> faqs() =>
       _stream('faqs', FaqItem.fromDoc, orderBy: 'order');
+
+  Stream<List<HistoryFact>> historyFacts() =>
+      _stream('history_facts', HistoryFact.fromDoc, orderBy: 'month');
 
   // ---- Writes (used by admins) -----------------------------------------
   Future<void> upsert(String collection, ContentItem item) async {
@@ -176,6 +180,9 @@ class FirestoreService {
     }
     for (final q in DemoData.faqs()) {
       await upsert('faqs', q);
+    }
+    for (final h in DemoData.historyFacts()) {
+      await upsert('history_facts', h);
     }
   }
 }

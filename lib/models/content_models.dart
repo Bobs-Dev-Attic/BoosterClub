@@ -22,6 +22,7 @@ class SchoolEvent implements ContentItem {
   final DateTime? endsAt;
   final String location;
   final String? imageUrl;
+  final String category; // see kEventCategories
 
   const SchoolEvent({
     required this.id,
@@ -31,6 +32,7 @@ class SchoolEvent implements ContentItem {
     this.endsAt,
     this.location = '',
     this.imageUrl,
+    this.category = 'General',
   });
 
   @override
@@ -44,6 +46,7 @@ class SchoolEvent implements ContentItem {
         endsAt: _ts(d['endsAt']),
         location: d['location'] ?? '',
         imageUrl: d['imageUrl'],
+        category: d['category'] ?? 'General',
       );
 
   @override
@@ -54,6 +57,7 @@ class SchoolEvent implements ContentItem {
         'endsAt': endsAt != null ? Timestamp.fromDate(endsAt!) : null,
         'location': location,
         'imageUrl': imageUrl,
+        'category': category,
       };
 }
 
@@ -389,5 +393,48 @@ class FaqItem implements ContentItem {
         'question': question,
         'answer': answer,
         'order': order,
+      };
+}
+
+/// A "This Day in Wildcat History" fact, keyed by calendar month/day so the
+/// home page can surface today's item. Managed by contributors.
+class HistoryFact implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title;
+  final String fact;
+  final int month; // 1-12
+  final int day; // 1-31
+  final int? year;
+
+  const HistoryFact({
+    required this.id,
+    required this.title,
+    required this.fact,
+    this.month = 1,
+    this.day = 1,
+    this.year,
+  });
+
+  @override
+  String get summary => fact;
+
+  factory HistoryFact.fromDoc(String id, Map<String, dynamic> d) => HistoryFact(
+        id: id,
+        title: d['title'] ?? '',
+        fact: d['fact'] ?? '',
+        month: (d['month'] ?? 1) as int,
+        day: (d['day'] ?? 1) as int,
+        year: d['year'] as int?,
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'fact': fact,
+        'month': month,
+        'day': day,
+        'year': year,
       };
 }

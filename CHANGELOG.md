@@ -3,6 +3,18 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.6.0
+- Left nav item renamed to **Funding Request**.
+- **Events** are now clickable — a detail dialog with **Share**, **Facebook/X**
+  post links, and an **Add reminder** (Google Calendar) button.
+- Added a scrollable **3-month calendar** (arrows to move) that dots event days
+  by category; tapping a day lists its events.
+- Added **category filters** (Athletics, Arts, Fundraiser, Meeting, Volunteer,
+  Deadline, School Holiday, Half Day…); events gain a category (admin-selectable).
+- Home page shows **"This Day in Wildcat History"** — facts that Contributors
+  (and admins) can add/edit/delete via a Manage dialog. New `history_facts`
+  collection + rules.
+
 ## 1.5.0
 - Rebuilt the **Funding Request form** (full-screen) with the full application:
   Sport Team vs Club selector; team/club name; coach/sponsor name & email;
