@@ -33,15 +33,16 @@ jobs:
         run: flutter build web --release --no-tree-shake-icons
 
   deploy:
-    # Auto-deploys Hosting to Firebase on every push to main — no local commands.
+    # Auto-deploys Hosting AND Firestore/Storage security rules to Firebase on
+    # every push to main — no local commands.
     # One-time setup: add a repo secret named FIREBASE_SERVICE_ACCOUNT containing
     # a Firebase service-account JSON key (Firebase console → Project settings →
-    # Service accounts → Generate new private key).
+    # Service accounts → Generate new private key). For the rules deploy the
+    # service account also needs the "Firebase Rules Admin" and "Service Usage
+    # Consumer" IAM roles on the project.
     #
-    # NOTE: this deploys Hosting only. Deploying Firestore rules / Cloud Functions
-    # from CI needs extra IAM roles on the service account (Firebase Rules Admin
-    # + Service Usage Consumer, and for functions the Blaze plan); rules change
-    # rarely and can be deployed manually with `firebase deploy --only firestore:rules`.
+    # NOTE: Cloud Functions are NOT deployed here (that needs the Blaze plan and
+    # extra roles); deploy them manually with `firebase deploy --only functions`.
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -65,3 +66,17 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
           projectId: boosterclub-bda
+
+      - name: Deploy Firestore & Storage rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          # Write the service-account JSON via an env var (not inline) so special
+          # characters can't break the shell, then authenticate the CLI with it.
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          npx --yes firebase-tools deploy \
+            --only firestore:rules,storage \
+            --project boosterclub-bda \
+            --non-interactive
+          rm -f "$RUNNER_TEMP/firebase-sa.json"
