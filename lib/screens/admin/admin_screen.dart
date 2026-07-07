@@ -63,6 +63,8 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
       if (can('manage_history'))
         _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
+      if (can('manage_gallery'))
+        _AdminTab('Gallery', Icons.photo_library, (fs) => _GalleryAdmin(fs)),
       if (can('manage_donations'))
         _AdminTab('Donations', Icons.favorite, (fs) => DonationsAdmin(fs: fs)),
       if (can('manage_users')) ...[
@@ -448,6 +450,21 @@ class _HistoryAdmin extends StatelessWidget {
             ),
           ],
         ),
+      );
+}
+
+class _GalleryAdmin extends StatelessWidget {
+  final FirestoreService fs;
+  const _GalleryAdmin(this.fs);
+  @override
+  Widget build(BuildContext context) => _AdminList<GalleryImage>(
+        collection: 'gallery',
+        stream: fs.gallery(),
+        fs: fs,
+        subtitle: (g) => g.caption.isNotEmpty
+            ? g.caption
+            : (g.tags.isNotEmpty ? g.tags.join(', ') : 'No caption'),
+        editor: (context, existing) => editGalleryImage(context, existing, fs),
       );
 }
 

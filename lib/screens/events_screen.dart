@@ -110,9 +110,9 @@ class _EventsScreenState extends State<EventsScreen> {
                   leading: Icon(categoryFor(e.category).icon,
                       color: categoryFor(e.category).color),
                   title: Text(e.title),
-                  subtitle: e.startsAt != null
+                  subtitle: (e.startsAt != null && !e.allDay)
                       ? Text(DateFormat('h:mm a').format(e.startsAt!))
-                      : null,
+                      : (e.allDay ? const Text('All day') : null),
                   onTap: () {
                     Navigator.pop(context);
                     showEventDetail(context, e);
@@ -379,8 +379,12 @@ class _EventTile extends StatelessWidget {
                       spacing: 12,
                       children: [
                         if (d != null)
-                          _meta(context, Icons.schedule,
-                              _timeRange(d, event.endsAt)),
+                          _meta(
+                              context,
+                              Icons.schedule,
+                              event.allDay
+                                  ? 'All day'
+                                  : _timeRange(d, event.endsAt)),
                         if (event.location.isNotEmpty)
                           _meta(context, Icons.place, event.location),
                       ],
@@ -467,10 +471,16 @@ class _EventDetailDialog extends StatelessWidget {
   const _EventDetailDialog(this.e);
 
   String get _shareText {
-    final when =
-        e.startsAt != null ? DateFormat('EEE, MMM d, y · h:mm a').format(e.startsAt!) : '';
+    final when = e.startsAt == null
+        ? ''
+        : e.allDay
+            ? DateFormat('EEE, MMM d, y').format(e.startsAt!)
+            : DateFormat('EEE, MMM d, y · h:mm a').format(e.startsAt!);
     return '${e.title}\n$when\n${e.location}\n\n${e.description}';
   }
+
+  String get _mapsUrl =>
+      'https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}';
 
   String get _shareUrl {
     final origin = Uri.base.origin.isEmpty ? 'https://boosterclub-bda.web.app' : Uri.base.origin;
@@ -527,8 +537,10 @@ class _EventDetailDialog extends StatelessWidget {
               if (d != null)
                 _row(context, Icons.calendar_today,
                     DateFormat('EEEE, MMMM d, y').format(d)),
-              if (d != null)
+              if (d != null && !e.allDay)
                 _row(context, Icons.schedule, _timeRange(d, e.endsAt)),
+              if (d != null && e.allDay)
+                _row(context, Icons.schedule, 'All day'),
               if (e.location.isNotEmpty)
                 _row(context, Icons.place, e.location),
               const SizedBox(height: 12),
@@ -550,6 +562,12 @@ class _EventDetailDialog extends StatelessWidget {
                     icon: const Icon(Icons.event_available, size: 18),
                     label: const Text('Add reminder'),
                   ),
+                  if (e.hasGeo)
+                    OutlinedButton.icon(
+                      onPressed: () => _open(_mapsUrl),
+                      icon: const Icon(Icons.map_outlined, size: 18),
+                      label: const Text('View on map'),
+                    ),
                   IconButton(
                     tooltip: 'Share on Facebook',
                     onPressed: () => _open(

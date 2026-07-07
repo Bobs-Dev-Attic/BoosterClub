@@ -3,7 +3,19 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
-## 1.11.0
+## 1.12.0
+- **Event geolocation.** Events can now carry optional **map coordinates**
+  (latitude, longitude) alongside the free-text location. When set, the event
+  detail dialog shows a **View on map** button that opens Google Maps.
+- **Optional event time.** The Start/End **Time** field now has a **"— blank —"**
+  option. Leaving the start time blank marks the event **all-day**, and times
+  are hidden for it throughout the calendar, list and detail views.
+- **New Gallery (shared media library).** A new **Gallery** section
+  (public page + Admin tab) where **Contributors** and content managers upload
+  and manage **images** — with titles, captions and tags — that can be reused in
+  various parts of the site. Backed by a new `gallery` Firestore collection and
+  `gallery/` Storage folder, gated by a new **`manage_gallery`** permission
+  (granted to Contributors, Administrators and Web Admins).
 - **Home layout**: on wide screens, **"This Day in Wildcat History"** now sits
   **beside** the "Go Wildcats!" hero (filling the space to its right) and
   matches its height; it stacks below the hero on narrow screens.

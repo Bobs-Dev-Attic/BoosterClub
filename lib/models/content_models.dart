@@ -21,6 +21,16 @@ class SchoolEvent implements ContentItem {
   final DateTime? startsAt;
   final DateTime? endsAt;
   final String location;
+
+  /// Optional map coordinates for [location]. When both are set the event
+  /// links out to a map / directions.
+  final double? latitude;
+  final double? longitude;
+
+  /// When true the event has a date but no specific time-of-day (the Time
+  /// field was left blank), so times are hidden throughout the UI.
+  final bool allDay;
+
   final String? imageUrl;
   final String category; // see kEventCategories
 
@@ -31,12 +41,18 @@ class SchoolEvent implements ContentItem {
     this.startsAt,
     this.endsAt,
     this.location = '',
+    this.latitude,
+    this.longitude,
+    this.allDay = false,
     this.imageUrl,
     this.category = 'General',
   });
 
   @override
   String get summary => description;
+
+  /// Whether the event carries usable map coordinates.
+  bool get hasGeo => latitude != null && longitude != null;
 
   factory SchoolEvent.fromDoc(String id, Map<String, dynamic> d) => SchoolEvent(
         id: id,
@@ -45,6 +61,9 @@ class SchoolEvent implements ContentItem {
         startsAt: _ts(d['startsAt']),
         endsAt: _ts(d['endsAt']),
         location: d['location'] ?? '',
+        latitude: (d['latitude'] as num?)?.toDouble(),
+        longitude: (d['longitude'] as num?)?.toDouble(),
+        allDay: d['allDay'] as bool? ?? false,
         imageUrl: d['imageUrl'],
         category: d['category'] ?? 'General',
       );
@@ -56,6 +75,9 @@ class SchoolEvent implements ContentItem {
         'startsAt': startsAt != null ? Timestamp.fromDate(startsAt!) : null,
         'endsAt': endsAt != null ? Timestamp.fromDate(endsAt!) : null,
         'location': location,
+        'latitude': latitude,
+        'longitude': longitude,
+        'allDay': allDay,
         'imageUrl': imageUrl,
         'category': category,
       };
@@ -444,5 +466,52 @@ class HistoryFact implements ContentItem {
         'day': day,
         'year': year,
         'sourceUrl': sourceUrl,
+      };
+}
+
+/// A reusable image in the shared media library. Contributors upload and manage
+/// these; other parts of the site can reference them by [imageUrl].
+class GalleryImage implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title;
+  final String imageUrl;
+  final String caption;
+
+  /// Free-form tags to help find and group images (e.g. `athletics`, `2026`).
+  final List<String> tags;
+  final DateTime? uploadedAt;
+
+  const GalleryImage({
+    required this.id,
+    required this.title,
+    required this.imageUrl,
+    this.caption = '',
+    this.tags = const [],
+    this.uploadedAt,
+  });
+
+  @override
+  String get summary => caption;
+
+  factory GalleryImage.fromDoc(String id, Map<String, dynamic> d) =>
+      GalleryImage(
+        id: id,
+        title: d['title'] ?? '',
+        imageUrl: d['imageUrl'] ?? '',
+        caption: d['caption'] ?? '',
+        tags: List<String>.from(d['tags'] ?? const []),
+        uploadedAt: _ts(d['uploadedAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'imageUrl': imageUrl,
+        'caption': caption,
+        'tags': tags,
+        'uploadedAt':
+            uploadedAt != null ? Timestamp.fromDate(uploadedAt!) : FieldValue.serverTimestamp(),
       };
 }
