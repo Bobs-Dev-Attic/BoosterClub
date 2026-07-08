@@ -3,7 +3,14 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
-## 1.13.1
+## 1.13.2
+- **Fix blank text on some networks.** The app previously loaded its fonts
+  (Inter/Poppins via Google Fonts) **over the network at runtime**, which on
+  Flutter web renders text **blank** when the font download is blocked (VPN,
+  content blocker, private DNS, or restrictive networks) — leaving the home hero,
+  app-bar title, and section headers empty. The app now uses Flutter's
+  **bundled default font**, so text always renders regardless of network. Removed
+  the `google_fonts` dependency.
 - **Show the app version on the loading splash.** The initial "Loading…" screen
   now displays the version (e.g. `v1.13.1`), read from `version.json` so it stays
   in sync with the pubspec version automatically.

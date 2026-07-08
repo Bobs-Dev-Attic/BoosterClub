@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Central Material 3 theme. Walter Johnson Wildcats colors: kelly green + white.
+///
+/// Typography intentionally uses Flutter's built-in default font (bundled with
+/// the app) rather than a web-fetched font. Runtime font fetching (e.g. Google
+/// Fonts) can leave text blank on Flutter web when the download is blocked by a
+/// VPN, content blocker, or restrictive network — so we avoid depending on it.
 class AppTheme {
   /// Primary brand color — Walter Johnson kelly green.
   static const Color green = Color(0xFF00843D);
@@ -34,13 +38,13 @@ class AppTheme {
       useMaterial3: true,
     );
     return base.copyWith(
-      textTheme: GoogleFonts.interTextTheme(base.textTheme),
+      // Use the default (bundled) text theme — no runtime font fetch.
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: scheme.onSurface,
@@ -82,10 +86,11 @@ class AppTheme {
   }
 }
 
-/// Headline font helper for hero sections.
+/// Headline style helper for hero sections. Uses the bundled default font so
+/// headings always render, even when web font fetching is blocked.
 TextStyle displayFont(BuildContext context,
         {double size = 32, FontWeight weight = FontWeight.w700, Color? color}) =>
-    GoogleFonts.poppins(
+    TextStyle(
       fontSize: size,
       fontWeight: weight,
       color: color ?? Theme.of(context).colorScheme.onSurface,
