@@ -3,6 +3,12 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.13.3
+- **Event location quick actions.** The event detail dialog's location row now has
+  a **copy-to-clipboard** button (with a check-mark confirmation) and, when the
+  location looks like an address (or has map coordinates), an **open-in-Maps**
+  button. Replaces the separate "View on map" button.
+
 ## 1.13.2
 - **Fix blank text on some networks.** The app previously loaded its fonts
   (Inter/Poppins via Google Fonts) **over the network at runtime**, which on
