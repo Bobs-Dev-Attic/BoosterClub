@@ -3,7 +3,11 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
-## 1.13.3
+## 1.13.4
+- **Gallery upload details.** After choosing an image in the Gallery editor, its
+  **pixel dimensions and file size (MB)** are shown, with a warning if it exceeds
+  the **10 MB** upload limit (and the save is blocked in that case) — so oversized
+  images are caught before a failed upload.
 - **Event location quick actions.** The event detail dialog's location row now has
   a **copy-to-clipboard** button (with a check-mark confirmation) and, when the
   location looks like an address (or has map coordinates), an **open-in-Maps**
