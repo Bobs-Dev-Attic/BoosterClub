@@ -300,4 +300,138 @@ class DemoData {
           uploadedAt: _future(-5),
         ),
       ];
+
+  static List<LegalDocument> legalDocuments() => const [
+        LegalDocument(id: 'terms', title: 'Terms of Use', body: _termsBody),
+        LegalDocument(
+            id: 'privacy', title: 'Privacy Policy', body: _privacyBody),
+      ];
 }
+
+// ---- Starter legal documents ---------------------------------------------
+// DRAFT starter text intended to be reviewed by a licensed attorney before it
+// is relied upon. Bracketed [PLACEHOLDERS] must be completed. Editable in-app by
+// a Policy Admin (Admin → Legal).
+
+const String _termsBody = '''
+# Terms of Use
+
+_Last updated: [EFFECTIVE DATE]_
+
+**DRAFT — This is a starter template, not legal advice. Have a licensed attorney review and adapt it before you rely on it.**
+
+By creating an account or using the WJ Booster Club application and website (the "Service"), operated by [LEGAL ENTITY NAME] ("we", "us", or "our") in support of Walter Johnson High School, you agree to these Terms of Use (the "Terms"). If you do not agree, do not use the Service.
+
+## 1. Who May Use the Service
+You must be at least 13 years old to create an account. If you are under 18, you may use the Service only with the involvement and consent of a parent or legal guardian. By using the Service you represent that you meet these requirements and that the information you provide is accurate.
+
+## 2. Accounts and Security
+- Sign-in is provided through email sign-in links and third-party sign-in (e.g., Google). You are responsible for maintaining the confidentiality of access to your email and account.
+- You are responsible for all activity that occurs under your account. Notify us promptly at [CONTACT EMAIL] of any unauthorized use.
+- We may suspend or terminate accounts that violate these Terms.
+
+## 3. Acceptable Use
+You agree not to:
+- Use the Service for any unlawful purpose or in violation of school policy.
+- Upload content that is unlawful, harassing, defamatory, infringing, or that contains another person's private information without permission.
+- Attempt to gain unauthorized access to the Service, other accounts, or our systems.
+- Interfere with or disrupt the integrity or performance of the Service.
+
+## 4. Content You Submit
+- You may submit content such as funding requests, volunteer sign-ups, and images ("Your Content"). You retain ownership of Your Content.
+- You grant us a non-exclusive, royalty-free license to host, display, and use Your Content solely to operate and promote the Booster Club and the Service.
+- You represent that you have the rights to submit Your Content and that it does not violate the rights of others. Do not upload images of minors without appropriate consent.
+- We may remove content that violates these Terms at our discretion.
+
+## 5. Donations and Payments
+- Donations are processed by a third-party payment provider (PayPal). We do not store your full payment card details.
+- Unless required by law or stated otherwise in writing, **donations are non-refundable**. To ask about a donation, contact [CONTACT EMAIL].
+- We do not provide tax or legal advice. Consult your advisor regarding the deductibility of any contribution, including our tax-exempt status under [TAX STATUS / EIN, IF APPLICABLE].
+
+## 6. Intellectual Property
+The Service, excluding Your Content, including its design, text, and logos, is owned by us or our licensors and is protected by law. You may not copy or reuse it except as permitted by these Terms or with our written permission.
+
+## 7. Third-Party Services
+The Service relies on third parties (for example, Google Firebase for hosting and data storage and PayPal for payments) and may link to third-party sites. We are not responsible for third-party services or content. Your use of them is governed by their terms and policies.
+
+## 8. Disclaimers
+The Service is provided "AS IS" and "AS AVAILABLE" without warranties of any kind, whether express or implied, to the fullest extent permitted by law. We do not warrant that the Service will be uninterrupted, secure, or error-free.
+
+## 9. Limitation of Liability
+To the fullest extent permitted by law, we and our volunteers and officers will not be liable for any indirect, incidental, special, or consequential damages, or for any loss of data, arising from your use of the Service. Our total liability for any claim will not exceed [AMOUNT, e.g., US \$100].
+
+## 10. Indemnification
+You agree to indemnify and hold us harmless from claims arising out of your use of the Service or your violation of these Terms, to the extent permitted by law.
+
+## 11. Termination
+We may suspend or end your access to the Service at any time. Sections that by their nature should survive termination (including Sections 4–10) will survive.
+
+## 12. Changes to These Terms
+We may update these Terms from time to time. Material changes will be posted here with a new "Last updated" date. Your continued use after changes take effect constitutes acceptance.
+
+## 13. Governing Law
+These Terms are governed by the laws of the State of Maryland, USA, without regard to conflict-of-laws rules. Disputes will be resolved in the state or federal courts located in [COUNTY], Maryland, unless another process is required by law.
+
+## 14. Contact
+Questions about these Terms: [CONTACT EMAIL] · [MAILING ADDRESS].
+''';
+
+const String _privacyBody = '''
+# Privacy Policy
+
+_Last updated: [EFFECTIVE DATE]_
+
+**DRAFT — This is a starter template, not legal advice. Have a licensed attorney review and adapt it before you rely on it.**
+
+This Privacy Policy explains how [LEGAL ENTITY NAME] ("we", "us", or "our"), in support of Walter Johnson High School, collects, uses, and shares information when you use the WJ Booster Club application and website (the "Service").
+
+## 1. Information We Collect
+- **Account information** you provide: name, email address, and optionally phone number, mailing address, and organization.
+- **Content you submit**: funding requests (which may include coach and parent names and emails and participant counts), volunteer sign-ups, meeting materials, and images you upload.
+- **Donation information**: amount, designation, and a payment confirmation from our payment processor (PayPal). We do **not** collect or store your full payment card number.
+- **Interest and preference settings**, such as email opt-in and selected interests.
+- **Technical data** collected automatically, such as device/browser type and app usage, and local storage used to keep you signed in and remember preferences.
+
+## 2. How We Use Information
+- To operate the Service: create and manage your account, display events and content, and process volunteer sign-ups and funding requests.
+- To process and record donations through our payment processor.
+- To communicate with you, including updates you have opted in to receive.
+- To maintain the security and integrity of the Service and keep an internal audit log of administrative changes.
+- To comply with legal obligations.
+
+## 3. How We Share Information
+We do **not** sell your personal information. We share it only:
+- **With service providers** that operate the Service on our behalf — for example, Google Firebase (hosting, authentication, database, and storage) and PayPal (payment processing) — under their terms and privacy policies.
+- **For legal reasons**, if required by law or to protect rights, safety, or the integrity of the Service.
+- **With your direction or consent**, for example content you choose to make publicly visible.
+
+## 4. Public Content
+Some content is publicly visible by design (for example, events, sponsor listings, gallery images, and the content of published policies). Do not submit information you do not want to be public in those areas.
+
+## 5. Data Retention
+We keep personal information for as long as your account is active or as needed to provide the Service, comply with legal obligations, resolve disputes, and enforce agreements. You may request deletion as described below.
+
+## 6. Security
+We use reasonable safeguards to protect information, including encryption in transit and at rest provided by our hosting platform, and role-based access controls. No method of transmission or storage is 100% secure, and we cannot guarantee absolute security.
+
+## 7. Your Choices and Rights
+- **Access and correction**: You can view and update your profile in the app.
+- **Email preferences**: You can opt out of update emails in your profile settings.
+- **Deletion**: You may request deletion of your account and associated personal information by contacting [CONTACT EMAIL], subject to records we must retain (for example, donation records).
+- Depending on where you live, you may have additional rights (for example, under the California Consumer Privacy Act or other applicable laws). We do not sell personal information.
+
+## 8. Children's Privacy
+The Service is intended for parents, guardians, school community members, and students aged 13 and older. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided us information, contact [CONTACT EMAIL] and we will delete it. Because the Service supports a school community, please be mindful of information about students that you choose to submit.
+
+## 9. Third-Party Links and Services
+The Service may link to or rely on third-party services (such as PayPal and Google). Their handling of your information is governed by their own privacy policies, which we encourage you to review.
+
+## 10. International Users
+The Service is operated in the United States. If you access it from outside the United States, you understand your information will be processed in the United States.
+
+## 11. Changes to This Policy
+We may update this Policy from time to time. Material changes will be posted here with a new "Last updated" date.
+
+## 12. Contact
+Questions or requests regarding your privacy: [CONTACT EMAIL] · [MAILING ADDRESS].
+''';

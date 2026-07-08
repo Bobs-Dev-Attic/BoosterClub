@@ -45,3 +45,6 @@ app.*.map.json
 # Cloud Functions
 functions/node_modules/
 functions/.env
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json

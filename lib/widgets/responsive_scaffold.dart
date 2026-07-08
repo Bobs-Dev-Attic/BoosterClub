@@ -87,6 +87,31 @@ class ResponsiveScaffold extends StatelessWidget {
   }
 }
 
+/// Small "Terms · Privacy" links shown in the navigation footers.
+Widget _legalLinks(BuildContext context) {
+  final color = Theme.of(context).colorScheme.onSurfaceVariant;
+  Widget link(String label, String route) => InkWell(
+        onTap: () => context.go(route),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  decoration: TextDecoration.underline)),
+        ),
+      );
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      link('Terms', '/terms'),
+      Text('·', style: TextStyle(color: color)),
+      link('Privacy', '/privacy'),
+    ],
+  );
+}
+
 class _Rail extends StatelessWidget {
   final int selected;
   final bool extended;
@@ -195,6 +220,10 @@ class _RailFooter extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         ThemeToggle(compact: !extended),
+        if (extended) ...[
+          const SizedBox(height: 4),
+          _legalLinks(context),
+        ],
         const SizedBox(height: 8),
         Text(
           'v${AppConfig.appVersion}',
@@ -383,6 +412,7 @@ class _MobileDrawer extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: ThemeToggle(compact: false),
             ),
+            _legalLinks(context),
             Padding(
               padding: const EdgeInsets.only(bottom: 12, top: 4),
               child: Text(

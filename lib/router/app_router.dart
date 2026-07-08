@@ -10,6 +10,7 @@ import '../screens/finish_signin_screen.dart';
 import '../screens/funding_screen.dart';
 import '../screens/fundraisers_screen.dart';
 import '../screens/gallery_screen.dart';
+import '../screens/legal_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/meetings_screen.dart';
@@ -84,6 +85,14 @@ GoRouter buildRouter() {
               pageBuilder: (_, __) => _page(const GalleryScreen())),
           GoRoute(
               path: '/faq', pageBuilder: (_, __) => _page(const FaqScreen())),
+          GoRoute(
+              path: '/terms',
+              pageBuilder: (_, __) => _page(const LegalScreen(
+                  docId: 'terms', fallbackTitle: 'Terms of Use'))),
+          GoRoute(
+              path: '/privacy',
+              pageBuilder: (_, __) => _page(const LegalScreen(
+                  docId: 'privacy', fallbackTitle: 'Privacy Policy'))),
           GoRoute(
               path: '/profile',
               pageBuilder: (_, __) => _page(const AccountScreen())),

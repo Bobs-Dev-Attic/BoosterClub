@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/demo_data.dart';
 import '../../data/local_history.dart';
 import '../../models/content_models.dart';
 import '../../providers/auth_provider.dart';
@@ -65,6 +66,8 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
       if (can('manage_gallery'))
         _AdminTab('Gallery', Icons.photo_library, (fs) => _GalleryAdmin(fs)),
+      if (can('manage_legal'))
+        _AdminTab('Legal', Icons.gavel, (fs) => _LegalAdmin(fs)),
       if (can('manage_donations'))
         _AdminTab('Donations', Icons.favorite, (fs) => DonationsAdmin(fs: fs)),
       if (can('manage_users')) ...[
@@ -451,6 +454,92 @@ class _HistoryAdmin extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Manages the two canonical legal documents (Terms, Privacy). Always shows
+/// both; if one hasn't been published yet, a starter template is offered so the
+/// Policy Admin can edit and publish it.
+class _LegalAdmin extends StatelessWidget {
+  final FirestoreService fs;
+  const _LegalAdmin(this.fs);
+
+  static const _knownIds = ['terms', 'privacy'];
+
+  LegalDocument _template(String id) =>
+      DemoData.legalDocuments().firstWhere((d) => d.id == id);
+
+  Future<void> _edit(BuildContext context, LegalDocument doc) async {
+    final result = await editLegalDocument(context, doc);
+    if (result != null) await fs.upsert('legal_documents', result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageBody(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 4),
+          Text(
+            'Terms of Use and Privacy Policy. Changes publish immediately to the '
+            'public Terms and Privacy pages. These are starter drafts — replace '
+            'every [PLACEHOLDER] and have an attorney review before relying on them.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          StreamBuilder<List<LegalDocument>>(
+            stream: fs.legalDocuments(),
+            builder: (context, snap) {
+              final existing = {
+                for (final d in (snap.data ?? const <LegalDocument>[])) d.id: d
+              };
+              return Column(
+                children: [
+                  for (final id in _knownIds)
+                    _LegalCard(
+                      doc: existing[id] ?? _template(id),
+                      published: existing.containsKey(id),
+                      onEdit: (doc) => _edit(context, doc),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegalCard extends StatelessWidget {
+  final LegalDocument doc;
+  final bool published;
+  final void Function(LegalDocument) onEdit;
+  const _LegalCard(
+      {required this.doc, required this.published, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    final updated = doc.updatedAt;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const Icon(Icons.gavel),
+        title: Text(doc.title),
+        subtitle: Text(published
+            ? (updated != null
+                ? 'Published · updated ${DateFormat('MMM d, y').format(updated)}'
+                : 'Published')
+            : 'Not published yet — a starter template is ready to edit'),
+        trailing: FilledButton.icon(
+          onPressed: () => onEdit(doc),
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('Edit'),
+        ),
+        isThreeLine: false,
+      ),
+    );
+  }
 }
 
 class _GalleryAdmin extends StatelessWidget {

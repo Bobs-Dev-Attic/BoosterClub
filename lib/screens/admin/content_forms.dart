@@ -1109,6 +1109,79 @@ Future<FaqItem?> editFaq(BuildContext context, FaqItem? q) {
   );
 }
 
+// ---- Legal document ------------------------------------------------------
+/// Full-screen editor for a legal/policy document (Terms of Use, Privacy
+/// Policy). The body supports light markup: `# `/`## ` headings, `- ` bullets,
+/// and inline `**bold**` / `_italic_`.
+Future<LegalDocument?> editLegalDocument(
+    BuildContext context, LegalDocument doc) {
+  final title = TextEditingController(text: doc.title);
+  final body = TextEditingController(text: doc.body);
+  return showDialog<LegalDocument>(
+    context: context,
+    builder: (context) => Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(doc.title.isEmpty ? 'Edit document' : 'Edit ${doc.title}'),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: FilledButton(
+                onPressed: () => Navigator.pop(
+                  context,
+                  LegalDocument(
+                    id: doc.id,
+                    title: title.text.trim(),
+                    body: body.text,
+                  ),
+                ),
+                child: const Text('Save'),
+              ),
+            ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
+              children: [
+                TextField(
+                  controller: title,
+                  decoration: _dec('Document title'),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Formatting: "# " and "## " for headings, "- " for bullets, '
+                  '**bold** and _italic_ inline. Replace every [PLACEHOLDER] '
+                  'before publishing, and have an attorney review.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: body,
+                  decoration: const InputDecoration(
+                    labelText: 'Document body',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: null,
+                  minLines: 20,
+                  keyboardType: TextInputType.multiline,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 // ---- Gallery image -------------------------------------------------------
 /// Editor for a shared media-library image. Handles picking and uploading the
 /// image file (to Firebase Storage via [fs]) before returning the saved

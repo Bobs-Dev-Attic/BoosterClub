@@ -11,6 +11,8 @@ Set<String> rolePermissions(UserRole role) {
       return kPermissions.where((p) => p != 'manage_users').toSet();
     case UserRole.contributor:
       return {'manage_meetings', 'manage_history', 'manage_gallery'};
+    case UserRole.policyAdmin:
+      return {'manage_legal'};
     default:
       return {};
   }
@@ -24,6 +26,7 @@ enum UserRole {
   member,
   contributor,
   sponsor,
+  policyAdmin,
   administrator,
   webAdmin;
 
@@ -46,6 +49,8 @@ enum UserRole {
         return 'Contributor';
       case UserRole.sponsor:
         return 'Sponsor';
+      case UserRole.policyAdmin:
+        return 'Policy Admin';
       case UserRole.administrator:
         return 'Administrator';
       case UserRole.webAdmin:

@@ -488,6 +488,44 @@ class HistoryFact implements ContentItem {
       };
 }
 
+/// A site legal/policy document (e.g. Terms of Use, Privacy Policy), managed by
+/// a Policy Admin. Keyed by a stable id such as `terms` or `privacy`. The body
+/// is plain text with a light markup convention: lines starting with `# ` or
+/// `## ` are headings and lines starting with `- ` are bullets.
+class LegalDocument implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title;
+  final String body;
+  final DateTime? updatedAt;
+
+  const LegalDocument({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.updatedAt,
+  });
+
+  @override
+  String get summary => body;
+
+  factory LegalDocument.fromDoc(String id, Map<String, dynamic> d) =>
+      LegalDocument(
+        id: id,
+        title: d['title'] ?? '',
+        body: d['body'] ?? '',
+        updatedAt: _ts(d['updatedAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'body': body,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+}
+
 /// A reusable image in the shared media library. Contributors upload and manage
 /// these; other parts of the site can reference them by [imageUrl].
 class GalleryImage implements ContentItem {
