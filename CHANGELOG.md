@@ -3,6 +3,11 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.13.1
+- **Show the app version on the loading splash.** The initial "Loading…" screen
+  now displays the version (e.g. `v1.13.1`), read from `version.json` so it stays
+  in sync with the pubspec version automatically.
+
 ## 1.13.0
 - **Terms of Use & Privacy Policy.** Added public **/terms** and **/privacy**
   pages (linked from the nav footers) that render editable legal documents, with
