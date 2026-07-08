@@ -31,7 +31,8 @@ service cloud.firestore {
     function roleGrants(role, perm) {
       return role == 'webAdmin'
         || (role == 'administrator' && perm != 'manage_users')
-        || (role == 'contributor' && (perm == 'manage_meetings' || perm == 'manage_history' || perm == 'manage_gallery'));
+        || (role == 'contributor' && (perm == 'manage_meetings' || perm == 'manage_history' || perm == 'manage_gallery'))
+        || (role == 'policyAdmin' && perm == 'manage_legal');
     }
 
     // Is there an active (non-expired) delegated grant for [perm]?
@@ -78,6 +79,7 @@ service cloud.firestore {
     match /faqs/{doc}          { allow read: if true; allow write: if hasPerm('manage_faqs'); }
     match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
     match /gallery/{doc}       { allow read: if true; allow write: if hasPerm('manage_gallery'); }
+    match /legal_documents/{doc} { allow read: if true; allow write: if hasPerm('manage_legal'); }
 
     // ---- Funding requests ---------------------------------------------
     // Anyone may read. Members and above may submit. Only funding managers may

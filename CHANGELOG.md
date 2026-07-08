@@ -3,7 +3,17 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
-## 1.12.2
+## 1.13.0
+- **Terms of Use & Privacy Policy.** Added public **/terms** and **/privacy**
+  pages (linked from the nav footers) that render editable legal documents, with
+  solid **starter drafts** covering the basics — intended as a starting point for
+  an attorney to review (bracketed `[PLACEHOLDERS]` mark what to complete).
+- **New "Policy Admin" role.** A dedicated role whose only permission is the new
+  **`manage_legal`** — it can edit the Terms and Privacy documents (Admin →
+  Legal) but nothing else. Administrators and Web Admins can manage them too.
+  Legal documents live in a new `legal_documents` Firestore collection (public
+  read, `manage_legal` write). The editor supports light markup
+  (`#`/`##` headings, `-` bullets, `**bold**`/`_italic_`).
 - **Address geocoding fix.** The "Find coordinates" lookup now uses the Census
   **one-line** geocoder endpoint, so typing a full address into the Street field
   (e.g. `6400 Rock Spring Drive, Bethesda, MD 20814`) resolves correctly — the

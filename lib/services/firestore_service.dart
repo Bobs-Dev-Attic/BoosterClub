@@ -34,6 +34,7 @@ class FirestoreService {
     _demo['faqs'] = List.of(DemoData.faqs());
     _demo['history_facts'] = List.of(DemoData.historyFacts());
     _demo['gallery'] = List.of(DemoData.gallery());
+    _demo['legal_documents'] = List.of(DemoData.legalDocuments());
   }
 
   StreamController<List<ContentItem>> _controllerFor(String c) {
@@ -96,6 +97,11 @@ class FirestoreService {
   Stream<List<GalleryImage>> gallery() => _stream(
       'gallery', GalleryImage.fromDoc,
       orderBy: 'uploadedAt', descending: true);
+
+  /// Legal/policy documents (Terms of Use, Privacy Policy). Small, unordered
+  /// set keyed by a stable id (`terms`, `privacy`).
+  Stream<List<LegalDocument>> legalDocuments() =>
+      _stream('legal_documents', LegalDocument.fromDoc);
 
   // ---- Writes (used by admins) -----------------------------------------
   Future<void> upsert(String collection, ContentItem item) async {
@@ -194,6 +200,9 @@ class FirestoreService {
     }
     for (final g in DemoData.gallery()) {
       await upsert('gallery', g);
+    }
+    for (final l in DemoData.legalDocuments()) {
+      await upsert('legal_documents', l);
     }
   }
 
