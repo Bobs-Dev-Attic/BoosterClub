@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1212,8 +1213,14 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
 
   Uint8List? _bytes; // newly picked image, not yet uploaded
   String _pickedName = 'image.jpg';
+  int _sizeBytes = 0; // size of the picked image
+  int? _width; // pixel dimensions of the picked image
+  int? _height;
   bool _busy = false;
   String? _error;
+
+  /// The Storage rule rejects images at or above this size.
+  static const int _maxBytes = 10 * 1024 * 1024;
 
   @override
   void initState() {
@@ -1237,13 +1244,29 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
           .pickImage(source: source, maxWidth: 2000, imageQuality: 85);
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
+      // Decode the (already resized) image to report its pixel dimensions.
+      int? w, h;
+      try {
+        final codec = await ui.instantiateImageCodec(bytes);
+        final frame = await codec.getNextFrame();
+        w = frame.image.width;
+        h = frame.image.height;
+        frame.image.dispose();
+        codec.dispose();
+      } catch (_) {
+        // Dimensions are best-effort; size still shows if decoding fails.
+      }
+      if (!mounted) return;
       setState(() {
         _bytes = bytes;
         _pickedName = picked.name;
+        _sizeBytes = bytes.lengthInBytes;
+        _width = w;
+        _height = h;
         _error = null;
       });
     } catch (e) {
-      setState(() => _error = 'Could not get image: $e');
+      if (mounted) setState(() => _error = 'Could not get image: $e');
     }
   }
 
@@ -1252,6 +1275,11 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
     final existingUrl = widget.existing?.imageUrl ?? '';
     if (_bytes == null && existingUrl.isEmpty) {
       setState(() => _error = 'Choose an image first.');
+      return;
+    }
+    if (_bytes != null && _sizeBytes >= _maxBytes) {
+      setState(() =>
+          _error = 'Image exceeds the 10 MB limit — choose a smaller one.');
       return;
     }
     setState(() {
@@ -1290,6 +1318,47 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
     }
   }
 
+  /// Shows the picked image's pixel dimensions and file size, warning when it
+  /// exceeds the Storage upload limit.
+  Widget _imageMeta(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final mb = _sizeBytes / (1024 * 1024);
+    final tooBig = _sizeBytes >= _maxBytes;
+    final dims =
+        (_width != null && _height != null) ? '$_width × $_height px' : null;
+    final summary =
+        [if (dims != null) dims, '${mb.toStringAsFixed(2)} MB'].join('  ·  ');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.straighten, size: 14, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(summary,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: scheme.onSurfaceVariant)),
+              ),
+            ],
+          ),
+          if (tooBig)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Exceeds the 10 MB upload limit — please choose a smaller image.',
+                style: TextStyle(fontSize: 12, color: scheme.error),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final existingUrl = widget.existing?.imageUrl ?? '';
@@ -1323,6 +1392,7 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
                               ),
                   ),
                 ),
+                if (_bytes != null) _imageMeta(context),
                 const SizedBox(height: 8),
                 Row(
                   children: [
