@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -482,6 +483,26 @@ class _EventDetailDialog extends StatelessWidget {
   String get _mapsUrl =>
       'https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}';
 
+  /// Maps link for the location: exact coordinates when available, otherwise a
+  /// text search of the address.
+  String get _locationMapUrl => e.hasGeo
+      ? _mapsUrl
+      : 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(e.location)}';
+
+  /// Heuristic for whether [e.location] is a mappable address (so we only show
+  /// the map icon for real addresses, not values like "Online" or "TBD").
+  bool get _locationIsMappable {
+    if (e.hasGeo) return true;
+    final t = e.location.trim();
+    if (t.isEmpty) return false;
+    final hasNumber = RegExp(r'\d').hasMatch(t);
+    final hasStreetWord = RegExp(
+      r'\b(st|street|ave|avenue|rd|road|dr|drive|blvd|boulevard|ln|lane|way|ct|court|cir|circle|pkwy|parkway|hwy|highway|pl|place|ste|suite|unit|apt|rm|room)\b',
+      caseSensitive: false,
+    ).hasMatch(t);
+    return hasNumber && (hasStreetWord || t.contains(','));
+  }
+
   String get _shareUrl {
     final origin = Uri.base.origin.isEmpty ? 'https://boosterclub-bda.web.app' : Uri.base.origin;
     return '$origin/#/events';
@@ -541,8 +562,7 @@ class _EventDetailDialog extends StatelessWidget {
                 _row(context, Icons.schedule, _timeRange(d, e.endsAt)),
               if (d != null && e.allDay)
                 _row(context, Icons.schedule, 'All day'),
-              if (e.location.isNotEmpty)
-                _row(context, Icons.place, e.location),
+              if (e.location.isNotEmpty) _locationRow(context),
               const SizedBox(height: 12),
               Text(e.description,
                   style: Theme.of(context).textTheme.bodyMedium),
@@ -562,12 +582,6 @@ class _EventDetailDialog extends StatelessWidget {
                     icon: const Icon(Icons.event_available, size: 18),
                     label: const Text('Add reminder'),
                   ),
-                  if (e.hasGeo)
-                    OutlinedButton.icon(
-                      onPressed: () => _open(_mapsUrl),
-                      icon: const Icon(Icons.map_outlined, size: 18),
-                      label: const Text('View on map'),
-                    ),
                   IconButton(
                     tooltip: 'Share on Facebook',
                     onPressed: () => _open(
@@ -609,4 +623,70 @@ class _EventDetailDialog extends StatelessWidget {
           ],
         ),
       );
+
+  /// Location row with copy-to-clipboard and (for addresses) an open-in-maps
+  /// action.
+  Widget _locationRow(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(Icons.place, size: 16, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Expanded(child: Text(e.location)),
+          _CopyButton(text: e.location, tooltip: 'Copy location'),
+          if (_locationIsMappable)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              tooltip: 'Open in Maps',
+              icon: Icon(Icons.map_outlined, color: scheme.primary),
+              onPressed: () => _open(_locationMapUrl),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A compact icon button that copies [text] to the clipboard and briefly shows
+/// a check mark as confirmation (works inside dialogs, where a SnackBar would be
+/// hidden behind the modal barrier).
+class _CopyButton extends StatefulWidget {
+  final String text;
+  final String tooltip;
+  const _CopyButton({required this.text, this.tooltip = 'Copy'});
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  bool _copied = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.text));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      visualDensity: VisualDensity.compact,
+      iconSize: 18,
+      tooltip: _copied ? 'Copied!' : widget.tooltip,
+      icon: Icon(
+        _copied ? Icons.check : Icons.copy_outlined,
+        color: _copied
+            ? Colors.green
+            : Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      onPressed: _copy,
+    );
+  }
 }
