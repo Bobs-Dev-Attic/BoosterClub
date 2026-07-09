@@ -11,6 +11,15 @@ Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
   Restructured the toolbar (Row with an `Expanded` wrap of view controls on the
   left and the selection/Add-new actions on the right) so it lays out correctly.
   Added a widget test that renders `GalleryAdmin` to guard against a regression.
+- **Stop stale caching between deploys.** The web app was built with Flutter's
+  default offline service worker, which cached the whole app in Cache Storage
+  and served it on the next visit regardless of the (already no-cache) Hosting
+  headers — so new deploys only appeared after a hard refresh. The app now
+  builds with `--pwa-strategy=none` (no service worker), and `index.html`
+  proactively unregisters any previously-installed worker and clears its caches,
+  so returning visitors converge on fresh builds automatically. (Trade-off:
+  the app no longer works offline, which it never usefully did — every screen
+  needs live Firebase data anyway.)
 
 ## 1.14.0
 - **Revamped Gallery management (Admin → Gallery).** The management view is now a

@@ -30,7 +30,10 @@ jobs:
         # --no-tree-shake-icons ships the full Material icon font so no glyph can
         # be missing after an update (avoids blank/box icons from a stale cached
         # icon-font subset).
-        run: flutter build web --release --no-tree-shake-icons
+        # --pwa-strategy=none disables the offline service worker so a new deploy
+        # is always fetched fresh (with the no-cache Hosting headers) instead of
+        # being served from the SW's Cache Storage until a second reload.
+        run: flutter build web --release --no-tree-shake-icons --pwa-strategy=none
 
   deploy:
     # Auto-deploys Hosting AND Firestore/Storage security rules to Firebase on
@@ -57,7 +60,7 @@ jobs:
       - name: Build web
         run: |
           flutter pub get
-          flutter build web --release --no-tree-shake-icons
+          flutter build web --release --no-tree-shake-icons --pwa-strategy=none
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
