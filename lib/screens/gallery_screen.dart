@@ -26,17 +26,28 @@ class GalleryScreen extends StatelessWidget {
             stream: fs.gallery(),
             emptyIcon: Icons.photo_library_outlined,
             emptyMessage: 'No images yet. Check back soon!',
-            builder: (context, images) => Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                for (final img in images)
-                  _GalleryTile(
-                    image: img,
-                    onTap: () => _showImage(context, img),
-                  ),
-              ],
-            ),
+            builder: (context, images) {
+              // Only images marked public are shown here; contributors can hide
+              // images from this page in the Admin dashboard.
+              final visible = images.where((i) => i.public).toList();
+              if (visible.isEmpty) {
+                return const EmptyState(
+                  icon: Icons.photo_library_outlined,
+                  message: 'No images yet. Check back soon!',
+                );
+              }
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final img in visible)
+                    _GalleryTile(
+                      image: img,
+                      onTap: () => _showImage(context, img),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
