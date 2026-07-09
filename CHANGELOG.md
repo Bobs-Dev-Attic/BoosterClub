@@ -3,6 +3,15 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.14.1
+- **Fixed the blank grey Gallery admin view.** The Gallery management toolbar
+  placed a `Spacer` inside a `Wrap`, which is only valid inside a Row/Column.
+  It compiled and analyzed cleanly but threw at layout time in the browser, so
+  the whole grid rendered as an empty grey error box and images never appeared.
+  Restructured the toolbar (Row with an `Expanded` wrap of view controls on the
+  left and the selection/Add-new actions on the right) so it lays out correctly.
+  Added a widget test that renders `GalleryAdmin` to guard against a regression.
+
 ## 1.14.0
 - **Revamped Gallery management (Admin → Gallery).** The management view is now a
   **thumbnail grid** with a toolbar (on the "Add new" row) for **sorting**

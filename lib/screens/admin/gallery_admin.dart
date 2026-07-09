@@ -146,82 +146,100 @@ class _GalleryAdminState extends State<GalleryAdmin> {
 
   Widget _toolbar(BuildContext context) {
     final hasSel = _selected.isNotEmpty;
+    // Left: view controls that wrap within the available width. Right: the
+    // selection/add actions. These two groups live in a Row (not a single
+    // Wrap) so we never place a Flex-only widget like Spacer inside a Wrap —
+    // doing so throws at layout time and renders a blank grey error box.
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Sort
-          _labeled(
-            'Sort',
-            DropdownButton<_GallerySort>(
-              value: _sort,
-              isDense: true,
-              underline: const SizedBox.shrink(),
-              onChanged: (v) => setState(() => _sort = v ?? _sort),
-              items: [
-                for (final s in _GallerySort.values)
-                  DropdownMenuItem(value: s, child: Text(s.label)),
+          Expanded(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                // Sort
+                _labeled(
+                  'Sort',
+                  DropdownButton<_GallerySort>(
+                    value: _sort,
+                    isDense: true,
+                    underline: const SizedBox.shrink(),
+                    onChanged: (v) => setState(() => _sort = v ?? _sort),
+                    items: [
+                      for (final s in _GallerySort.values)
+                        DropdownMenuItem(value: s, child: Text(s.label)),
+                    ],
+                  ),
+                ),
+                // Grid columns
+                _labeled(
+                  'Grid',
+                  DropdownButton<int>(
+                    value: _columns,
+                    isDense: true,
+                    underline: const SizedBox.shrink(),
+                    onChanged: (v) => setState(() => _columns = v ?? 0),
+                    items: const [
+                      DropdownMenuItem(value: 0, child: Text('Auto')),
+                      DropdownMenuItem(value: 2, child: Text('2')),
+                      DropdownMenuItem(value: 3, child: Text('3')),
+                      DropdownMenuItem(value: 4, child: Text('4')),
+                      DropdownMenuItem(value: 5, child: Text('5')),
+                      DropdownMenuItem(value: 6, child: Text('6')),
+                    ],
+                  ),
+                ),
+                // Thumbnail size
+                _labeled(
+                  'Thumbnail',
+                  SegmentedButton<double>(
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: 120, label: Text('S')),
+                      ButtonSegment(value: 170, label: Text('M')),
+                      ButtonSegment(value: 240, label: Text('L')),
+                    ],
+                    selected: {_thumb},
+                    onSelectionChanged: (s) => setState(() => _thumb = s.first),
+                  ),
+                ),
               ],
             ),
           ),
-          // Grid columns
-          _labeled(
-            'Grid',
-            DropdownButton<int>(
-              value: _columns,
-              isDense: true,
-              underline: const SizedBox.shrink(),
-              onChanged: (v) => setState(() => _columns = v ?? 0),
-              items: const [
-                DropdownMenuItem(value: 0, child: Text('Auto')),
-                DropdownMenuItem(value: 2, child: Text('2')),
-                DropdownMenuItem(value: 3, child: Text('3')),
-                DropdownMenuItem(value: 4, child: Text('4')),
-                DropdownMenuItem(value: 5, child: Text('5')),
-                DropdownMenuItem(value: 6, child: Text('6')),
+          const SizedBox(width: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (hasSel) ...[
+                Text('${_selected.length} selected'),
+                TextButton.icon(
+                  onPressed: () => setState(_selected.clear),
+                  icon: const Icon(Icons.clear, size: 18),
+                  label: const Text('Clear'),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: _deleteSelected,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: Text('Delete (${_selected.length})'),
+                ),
               ],
-            ),
-          ),
-          // Thumbnail size
-          _labeled(
-            'Thumbnail',
-            SegmentedButton<double>(
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              FilledButton.icon(
+                onPressed: () => _addOrEdit(null),
+                icon: const Icon(Icons.add),
+                label: const Text('Add new'),
               ),
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(value: 120, label: Text('S')),
-                ButtonSegment(value: 170, label: Text('M')),
-                ButtonSegment(value: 240, label: Text('L')),
-              ],
-              selected: {_thumb},
-              onSelectionChanged: (s) => setState(() => _thumb = s.first),
-            ),
-          ),
-          const Spacer(),
-          if (hasSel) ...[
-            Text('${_selected.length} selected'),
-            TextButton.icon(
-              onPressed: () => setState(_selected.clear),
-              icon: const Icon(Icons.clear, size: 18),
-              label: const Text('Clear'),
-            ),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: _deleteSelected,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: Text('Delete (${_selected.length})'),
-            ),
-          ],
-          FilledButton.icon(
-            onPressed: () => _addOrEdit(null),
-            icon: const Icon(Icons.add),
-            label: const Text('Add new'),
+            ],
           ),
         ],
       ),
