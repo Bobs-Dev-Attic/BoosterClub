@@ -1,7 +1,7 @@
 name: booster_club
 description: "High School Booster Club app — events, volunteering, sponsorships, donations, fundraising and more."
 publish_to: 'none'
-version: 1.14.0+34
+version: 1.14.1+35
 
 environment:
   sdk: ^3.5.0
