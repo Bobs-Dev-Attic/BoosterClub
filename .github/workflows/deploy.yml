@@ -67,16 +67,33 @@ jobs:
           channelId: live
           projectId: boosterclub-bda
 
-      - name: Deploy Firestore & Storage rules
+      - name: Set up Firebase credentials
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           # Write the service-account JSON via an env var (not inline) so special
-          # characters can't break the shell, then authenticate the CLI with it.
+          # characters can't break the shell, then expose it to later steps.
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          npx --yes firebase-tools deploy \
-            --only firestore:rules,storage \
-            --project boosterclub-bda \
-            --non-interactive
-          rm -f "$RUNNER_TEMP/firebase-sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> "$GITHUB_ENV"
+
+      # Firestore rules and Storage rules are deployed in SEPARATE steps on
+      # purpose: `firebase deploy --only firestore:rules,storage` prepares all
+      # targets before releasing any, so a failure preparing Storage (e.g. the
+      # firebasestorage.defaultBucket.get permission) aborts the whole deploy and
+      # the Firestore rules never ship. Splitting them lets the Firestore rules
+      # (public Gallery/Legal reads, permission-gated writes) deploy on their own.
+      - name: Deploy Firestore rules
+        run: |
+          npx --yes firebase-tools deploy --only firestore:rules \
+            --project boosterclub-bda --non-interactive
+
+      # Storage rules need the service account to have a Firebase Storage
+      # permission (firebasestorage.defaultBucket.get — e.g. via roles/
+      # firebase.admin). Until that IAM grant is in place this step fails, but it
+      # must NOT block the workflow: Hosting and Firestore rules already shipped
+      # above. Once the role is granted this turns green with no further changes.
+      - name: Deploy Storage rules
+        continue-on-error: true
+        run: |
+          npx --yes firebase-tools deploy --only storage \
+            --project boosterclub-bda --non-interactive
