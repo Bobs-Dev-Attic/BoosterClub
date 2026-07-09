@@ -3,7 +3,20 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
-## 1.13.4
+## 1.14.0
+- **Revamped Gallery management (Admin → Gallery).** The management view is now a
+  **thumbnail grid** with a toolbar (on the "Add new" row) for **sorting**
+  (newest/oldest, title, file size), **grid columns** (Auto or 2–6) and
+  **thumbnail size** (S/M/L).
+  - **Multi-select delete**: tap the corner checkbox on any thumbnails and
+    **Delete (N)** removes them in one go.
+  - **Full-screen viewer**: tap an image to open it large, swipe or use the
+    **prev/next** arrows to navigate, pinch/scroll to **zoom**, and see its
+    **metadata** (filename, dimensions, size, created date) plus title, caption
+    and tags. From the viewer you can **Download**, **Edit** (title/caption/tags)
+    or **Delete**.
+- Gallery images now store their **filename, dimensions and size** at upload time
+  so the viewer can show them.
 - **Gallery upload details.** After choosing an image in the Gallery editor, its
   **pixel dimensions and file size (MB)** are shown, with a warning if it exceeds
   the **10 MB** upload limit (and the save is blocked in that case) — so oversized
