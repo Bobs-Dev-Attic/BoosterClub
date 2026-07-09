@@ -27,11 +27,15 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
 
-    // Shared media library: publicly readable; only Contributors and content
-    // managers may upload, and only images up to 10 MB.
+    // Shared media library: publicly readable. Any signed-in user may upload an
+    // image up to 10 MB (same as funding photos). Who can actually *publish* a
+    // gallery entry is gated separately by the Firestore `gallery` collection
+    // rule (manage_gallery) — an uploaded file that isn't referenced by a
+    // gallery document is never surfaced in the app. This avoids a cross-service
+    // role() lookup that was denying legitimate Contributor uploads.
     match /gallery/{file} {
       allow read: if true;
-      allow write: if role() in ['contributor', 'administrator', 'webAdmin']
+      allow write: if request.auth != null
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
