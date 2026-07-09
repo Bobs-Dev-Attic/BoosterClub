@@ -79,6 +79,21 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> "$GITHUB_ENV"
 
+      # Apply the bucket CORS policy so the web app (CanvasKit) can fetch and
+      # draw Storage images. New-style *.firebasestorage.app buckets ship with
+      # NO CORS config, so cross-origin image fetches are blocked and every
+      # Storage image (Gallery, sponsor logos, …) renders as a broken image on
+      # the web. This is idempotent — re-applying the same policy each deploy is
+      # harmless. continue-on-error so it can't block Hosting/rules if the
+      # service account lacks storage.buckets.update.
+      - name: Configure Storage CORS
+        continue-on-error: true
+        run: |
+          gcloud auth activate-service-account \
+            --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+          gcloud storage buckets update \
+            gs://boosterclub-bda.firebasestorage.app --cors-file=cors.json
+
       # Firestore rules and Storage rules are deployed in SEPARATE steps on
       # purpose: `firebase deploy --only firestore:rules,storage` prepares all
       # targets before releasing any, so a failure preparing Storage (e.g. the
