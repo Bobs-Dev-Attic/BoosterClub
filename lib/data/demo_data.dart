@@ -306,6 +306,7 @@ class DemoData {
           width: 512,
           height: 512,
           sizeBytes: 48000,
+          public: false,
         ),
       ];
 

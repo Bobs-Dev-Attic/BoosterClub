@@ -547,6 +547,12 @@ class GalleryImage implements ContentItem {
   final int? height;
   final int? sizeBytes;
 
+  /// Whether the image is shown on the public Gallery page. Contributors can
+  /// hide an image (e.g. a work-in-progress or a photo kept only for internal
+  /// reuse) without deleting it. Defaults to true, so images created before
+  /// this flag existed stay visible.
+  final bool public;
+
   const GalleryImage({
     required this.id,
     required this.title,
@@ -558,6 +564,7 @@ class GalleryImage implements ContentItem {
     this.width,
     this.height,
     this.sizeBytes,
+    this.public = true,
   });
 
   @override
@@ -588,6 +595,7 @@ class GalleryImage implements ContentItem {
         width: (d['width'] as num?)?.toInt(),
         height: (d['height'] as num?)?.toInt(),
         sizeBytes: (d['sizeBytes'] as num?)?.toInt(),
+        public: d['public'] ?? true,
       );
 
   @override
@@ -600,6 +608,7 @@ class GalleryImage implements ContentItem {
         'width': width,
         'height': height,
         'sizeBytes': sizeBytes,
+        'public': public,
         'uploadedAt':
             uploadedAt != null ? Timestamp.fromDate(uploadedAt!) : FieldValue.serverTimestamp(),
       };
@@ -614,6 +623,7 @@ class GalleryImage implements ContentItem {
     int? width,
     int? height,
     int? sizeBytes,
+    bool? public,
   }) =>
       GalleryImage(
         id: id,
@@ -626,5 +636,6 @@ class GalleryImage implements ContentItem {
         width: width ?? this.width,
         height: height ?? this.height,
         sizeBytes: sizeBytes ?? this.sizeBytes,
+        public: public ?? this.public,
       );
 }

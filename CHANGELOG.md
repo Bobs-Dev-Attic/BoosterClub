@@ -3,6 +3,16 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.14.3
+- **Gallery images can be marked public or hidden.** The image editor now has a
+  **"Show on public gallery"** toggle, so a Contributor can keep an image in the
+  library for reuse without showing it on the public Gallery page. Hidden images
+  are marked with a **"Hidden"** badge in the Admin grid (and a visibility line
+  in the full-screen viewer) and are filtered out of the public Gallery. Images
+  created before this flag existed stay public by default. (Visibility is
+  enforced on the public Gallery page; it is not a hard access control on the
+  raw image file.)
+
 ## 1.14.2
 - **Fixed Storage images showing as broken images on the web.** Gallery
   thumbnails (and any other Cloud Storage image, e.g. sponsor logos) rendered

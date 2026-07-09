@@ -1216,6 +1216,7 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
   int _sizeBytes = 0; // size of the picked image
   int? _width; // pixel dimensions of the picked image
   int? _height;
+  bool _public = true; // shown on the public Gallery page
   bool _busy = false;
   String? _error;
 
@@ -1228,6 +1229,7 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
     _title = TextEditingController(text: widget.existing?.title);
     _caption = TextEditingController(text: widget.existing?.caption);
     _tags = TextEditingController(text: widget.existing?.tags.join(', ') ?? '');
+    _public = widget.existing?.public ?? true;
   }
 
   @override
@@ -1316,6 +1318,7 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
         width: _bytes != null ? _width : existing?.width,
         height: _bytes != null ? _height : existing?.height,
         sizeBytes: _bytes != null ? _sizeBytes : existing?.sizeBytes,
+        public: _public,
       ));
     } catch (e) {
       setState(() {
@@ -1437,6 +1440,20 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
                 TextFormField(
                     controller: _tags,
                     decoration: _dec('Tags (comma-separated, optional)')),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _public,
+                  onChanged:
+                      _busy ? null : (v) => setState(() => _public = v),
+                  secondary:
+                      Icon(_public ? Icons.public : Icons.lock_outline),
+                  title: const Text('Show on public gallery'),
+                  subtitle: Text(_public
+                      ? 'Visible to everyone on the Gallery page.'
+                      : 'Hidden from the public Gallery — visible only to '
+                          'managers here.'),
+                ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: const TextStyle(color: Colors.red)),

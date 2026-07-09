@@ -339,6 +339,31 @@ class _GalleryTile extends StatelessWidget {
               ),
             ),
           ),
+          // "Hidden from public" badge for non-public images.
+          if (!image.public)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: IgnorePointer(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.visibility_off, color: Colors.white, size: 13),
+                      SizedBox(width: 3),
+                      Text('Hidden',
+                          style: TextStyle(color: Colors.white, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           // Selection checkbox. An opaque GestureDetector on top absorbs the
           // tap so toggling selection never also opens the viewer.
           Positioned(
@@ -616,6 +641,8 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                   _meta(Icons.straighten, '${img.dimensionsLabel} px'),
                 if (img.sizeLabel != null) _meta(Icons.sd_storage, img.sizeLabel!),
                 if (created != null) _meta(Icons.event, created),
+                _meta(img.public ? Icons.public : Icons.visibility_off,
+                    img.public ? 'Public' : 'Hidden from public'),
               ],
             ),
             if (img.tags.isNotEmpty) ...[
