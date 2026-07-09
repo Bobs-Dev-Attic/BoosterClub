@@ -13,6 +13,7 @@ import '../../widgets/common.dart';
 import 'content_forms.dart';
 import 'donations_admin.dart';
 import 'event_import.dart';
+import 'gallery_admin.dart';
 import 'users_admin.dart';
 
 /// Admin dashboard. Visible to Administrators and Web Admins. Lets managers
@@ -65,7 +66,7 @@ class AdminScreen extends StatelessWidget {
       if (can('manage_history'))
         _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
       if (can('manage_gallery'))
-        _AdminTab('Gallery', Icons.photo_library, (fs) => _GalleryAdmin(fs)),
+        _AdminTab('Gallery', Icons.photo_library, (fs) => GalleryAdmin(fs: fs)),
       if (can('manage_legal'))
         _AdminTab('Legal', Icons.gavel, (fs) => _LegalAdmin(fs)),
       if (can('manage_donations'))
@@ -540,21 +541,6 @@ class _LegalCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _GalleryAdmin extends StatelessWidget {
-  final FirestoreService fs;
-  const _GalleryAdmin(this.fs);
-  @override
-  Widget build(BuildContext context) => _AdminList<GalleryImage>(
-        collection: 'gallery',
-        stream: fs.gallery(),
-        fs: fs,
-        subtitle: (g) => g.caption.isNotEmpty
-            ? g.caption
-            : (g.tags.isNotEmpty ? g.tags.join(', ') : 'No caption'),
-        editor: (context, existing) => editGalleryImage(context, existing, fs),
-      );
 }
 
 /// One-click import of the built-in local Bethesda / Montgomery County / WJ

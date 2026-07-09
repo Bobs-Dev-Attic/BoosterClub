@@ -540,6 +540,13 @@ class GalleryImage implements ContentItem {
   final List<String> tags;
   final DateTime? uploadedAt;
 
+  /// Original file metadata, captured at upload time (may be absent for images
+  /// added before this was tracked).
+  final String fileName;
+  final int? width;
+  final int? height;
+  final int? sizeBytes;
+
   const GalleryImage({
     required this.id,
     required this.title,
@@ -547,10 +554,27 @@ class GalleryImage implements ContentItem {
     this.caption = '',
     this.tags = const [],
     this.uploadedAt,
+    this.fileName = '',
+    this.width,
+    this.height,
+    this.sizeBytes,
   });
 
   @override
   String get summary => caption;
+
+  /// `"1600 × 1200"` when known, else null.
+  String? get dimensionsLabel =>
+      (width != null && height != null) ? '$width × $height' : null;
+
+  /// Human-readable file size (e.g. `2.3 MB`, `840 KB`) when known, else null.
+  String? get sizeLabel {
+    final b = sizeBytes;
+    if (b == null || b <= 0) return null;
+    if (b >= 1024 * 1024) return '${(b / (1024 * 1024)).toStringAsFixed(2)} MB';
+    if (b >= 1024) return '${(b / 1024).toStringAsFixed(0)} KB';
+    return '$b B';
+  }
 
   factory GalleryImage.fromDoc(String id, Map<String, dynamic> d) =>
       GalleryImage(
@@ -560,6 +584,10 @@ class GalleryImage implements ContentItem {
         caption: d['caption'] ?? '',
         tags: List<String>.from(d['tags'] ?? const []),
         uploadedAt: _ts(d['uploadedAt']),
+        fileName: d['fileName'] ?? '',
+        width: (d['width'] as num?)?.toInt(),
+        height: (d['height'] as num?)?.toInt(),
+        sizeBytes: (d['sizeBytes'] as num?)?.toInt(),
       );
 
   @override
@@ -568,7 +596,35 @@ class GalleryImage implements ContentItem {
         'imageUrl': imageUrl,
         'caption': caption,
         'tags': tags,
+        'fileName': fileName,
+        'width': width,
+        'height': height,
+        'sizeBytes': sizeBytes,
         'uploadedAt':
             uploadedAt != null ? Timestamp.fromDate(uploadedAt!) : FieldValue.serverTimestamp(),
       };
+
+  GalleryImage copyWith({
+    String? title,
+    String? imageUrl,
+    String? caption,
+    List<String>? tags,
+    DateTime? uploadedAt,
+    String? fileName,
+    int? width,
+    int? height,
+    int? sizeBytes,
+  }) =>
+      GalleryImage(
+        id: id,
+        title: title ?? this.title,
+        imageUrl: imageUrl ?? this.imageUrl,
+        caption: caption ?? this.caption,
+        tags: tags ?? this.tags,
+        uploadedAt: uploadedAt ?? this.uploadedAt,
+        fileName: fileName ?? this.fileName,
+        width: width ?? this.width,
+        height: height ?? this.height,
+        sizeBytes: sizeBytes ?? this.sizeBytes,
+      );
 }

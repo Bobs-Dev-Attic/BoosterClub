@@ -1302,13 +1302,20 @@ class _GalleryImageDialogState extends State<_GalleryImageDialog> {
           .map((t) => t.trim())
           .where((t) => t.isNotEmpty)
           .toList();
+      final existing = widget.existing;
+      // When a new file was picked, record its metadata; otherwise keep what
+      // the existing image already had.
       navigator.pop(GalleryImage(
-        id: widget.existing?.id ?? 'new',
+        id: existing?.id ?? 'new',
         title: _title.text.trim(),
         imageUrl: url,
         caption: _caption.text.trim(),
         tags: tags,
-        uploadedAt: widget.existing?.uploadedAt,
+        uploadedAt: existing?.uploadedAt,
+        fileName: _bytes != null ? _pickedName : (existing?.fileName ?? ''),
+        width: _bytes != null ? _width : existing?.width,
+        height: _bytes != null ? _height : existing?.height,
+        sizeBytes: _bytes != null ? _sizeBytes : existing?.sizeBytes,
       ));
     } catch (e) {
       setState(() {

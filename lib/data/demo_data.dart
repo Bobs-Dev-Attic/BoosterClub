@@ -290,6 +290,10 @@ class DemoData {
           caption: 'The front of the WJ building on a fall afternoon.',
           tags: const ['campus', 'school'],
           uploadedAt: _future(-2),
+          fileName: 'wj-frontb.jpg',
+          width: 1600,
+          height: 1067,
+          sizeBytes: 412000,
         ),
         GalleryImage(
           id: 'g2',
@@ -298,6 +302,10 @@ class DemoData {
           caption: 'Official Walter Johnson Wildcats logo.',
           tags: const ['logo', 'branding'],
           uploadedAt: _future(-5),
+          fileName: 'wj_logo.png',
+          width: 512,
+          height: 512,
+          sizeBytes: 48000,
         ),
       ];
 
