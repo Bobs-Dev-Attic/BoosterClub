@@ -3,6 +3,17 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.14.2
+- **Fixed Storage images showing as broken images on the web.** Gallery
+  thumbnails (and any other Cloud Storage image, e.g. sponsor logos) rendered
+  as the broken-image placeholder because the `*.firebasestorage.app` bucket
+  had no CORS policy. Flutter web draws images with CanvasKit, which fetches
+  the bytes over HTTP and needs `Access-Control-Allow-Origin`; without it the
+  browser blocks the fetch. Added a `cors.json` (allow `GET`/`HEAD` from any
+  origin — these images are already public) and a deploy step that applies it
+  to the bucket with `gcloud storage buckets update`, so images load on the
+  web app.
+
 ## 1.14.1
 - **Fixed the blank grey Gallery admin view.** The Gallery management toolbar
   placed a `Spacer` inside a `Wrap`, which is only valid inside a Row/Column.
