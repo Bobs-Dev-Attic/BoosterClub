@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/app_user.dart';
 import '../../models/audit.dart';
+import '../../models/content_models.dart';
 import '../../models/permissions.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/common.dart';
@@ -85,6 +86,10 @@ class _UserEditorState extends State<_UserEditor> {
   late UserRole _role = widget.target.role;
   // Delegated grants (perm -> expiry; AppUser.never means permanent).
   late final Map<String, DateTime> _grants = Map.of(widget.target.grants);
+  // Committee memberships (committee ids).
+  late final Set<String> _committees = {...widget.target.committees};
+  // Cache of committee id -> name, populated as the list streams in.
+  Map<String, String> _committeeNames = {};
   bool _busy = false;
 
   bool _roleHas(String perm) => rolePermissions(_role).contains(perm);
@@ -124,6 +129,49 @@ class _UserEditorState extends State<_UserEditor> {
               ),
               const SizedBox(height: 8),
               for (final perm in kPermissions) _permRow(perm),
+              const SizedBox(height: 16),
+              Text('Committees',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const Text(
+                'Which committees this member belongs to.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              StreamBuilder<List<Committee>>(
+                stream: widget.fs.committees(),
+                builder: (context, snap) {
+                  final committees = snap.data ?? const <Committee>[];
+                  _committeeNames = {for (final c in committees) c.id: c.title};
+                  if (committees.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                          'No committees exist yet — create them in Admin → '
+                          'Committees.',
+                          style: TextStyle(fontSize: 12)),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final c in committees)
+                        CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          value: _committees.contains(c.id),
+                          onChanged: (v) => setState(() {
+                            if (v == true) {
+                              _committees.add(c.id);
+                            } else {
+                              _committees.remove(c.id);
+                            }
+                          }),
+                          title: Text(c.title),
+                          subtitle: Text(c.category.label),
+                        ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -250,6 +298,17 @@ class _UserEditorState extends State<_UserEditor> {
         actions.add('Revoked "${kPermissionLabels[k] ?? k}"');
       }
     }
+    // Compare committee memberships.
+    final origC = orig.committees.toSet();
+    String cName(String id) => _committeeNames[id] ?? id;
+    for (final id in _committees) {
+      if (!origC.contains(id)) actions.add('Added to committee "${cName(id)}"');
+    }
+    for (final id in origC) {
+      if (!_committees.contains(id)) {
+        actions.add('Removed from committee "${cName(id)}"');
+      }
+    }
 
     if (actions.isEmpty) {
       setState(() => _busy = false);
@@ -259,7 +318,8 @@ class _UserEditorState extends State<_UserEditor> {
 
     try {
       await widget.fs.saveUserAdmin(
-        orig.copyWith(role: _role, grants: _grants),
+        orig.copyWith(
+            role: _role, grants: _grants, committees: _committees.toList()),
         actor: widget.actor,
         actions: actions,
       );

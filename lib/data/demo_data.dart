@@ -311,10 +311,69 @@ class DemoData {
       ];
 
   static List<Committee> committees() => const [
+        // ---- Leadership groups ----
+        Committee(
+          id: 'lead_exec',
+          title: 'Executive Committee',
+          category: CommitteeCategory.leadership,
+          order: 1,
+          positions: [
+            CommitteePosition(title: 'President', holder: 'Mary Bittle Koenick'),
+            CommitteePosition(title: 'Vice President', holder: 'Sarah Allison'),
+            CommitteePosition(title: 'Secretary', holder: 'Sara Williams'),
+            CommitteePosition(title: 'Treasurer', holder: 'Anna Park'),
+            CommitteePosition(
+                title: 'WJ Athletic Specialist', holder: 'Larry A Hurd Jr'),
+            CommitteePosition(
+                title: 'Assistant Principal & Booster Club Liaison',
+                holder: 'Terry Heintze'),
+          ],
+        ),
+        Committee(
+          id: 'lead_chairs',
+          title: 'Committee Chairs',
+          category: CommitteeCategory.leadership,
+          order: 2,
+          positions: [
+            CommitteePosition(
+                title: 'Corporate Banners & Sponsorships',
+                holder: 'Kara Kehoe'),
+            CommitteePosition(
+                title: 'Commissioner (Clubs)', holder: 'Michelle Reid'),
+            CommitteePosition(
+                title: 'Commissioner (Sports)', holder: 'OPEN'),
+            CommitteePosition(title: 'Concessions', holder: 'Dawn Harris'),
+            CommitteePosition(
+                title: 'Mulch Sale', holder: 'Mary Bittle Koenick'),
+            CommitteePosition(
+                title: 'Used Book Sale', holder: 'Natalie Shelton'),
+            CommitteePosition(title: 'Newsletter', holder: 'OPEN'),
+            CommitteePosition(
+                title: 'Parent Coordinator', holder: 'Howard Mann'),
+            CommitteePosition(title: 'School Store', holder: 'Becky Sher'),
+            CommitteePosition(title: 'Social Media', holder: 'OPEN'),
+            CommitteePosition(title: 'Website', holder: 'Jennifer Dooren'),
+          ],
+        ),
+        Committee(
+          id: 'lead_class',
+          title: 'Class Chairs',
+          category: CommitteeCategory.leadership,
+          order: 3,
+          positions: [
+            CommitteePosition(title: '9th Grade', holder: 'Howard Mann'),
+            CommitteePosition(title: '10th Grade', holder: 'Meghan Zampardi'),
+            CommitteePosition(title: '11th Grade', holder: 'Howard Mann'),
+            CommitteePosition(
+                title: '12th Grade', holder: 'Debbie Berger, Cheryl Hughes'),
+          ],
+        ),
+        // ---- Working committees ----
         Committee(
           id: 'com_concessions',
           title: 'Concessions',
-          order: 1,
+          order: 11,
+          positions: [CommitteePosition(title: 'Chair', holder: 'Dawn Harris')],
           description:
               'Clubs and teams run concession stands during events hosted at WJ.',
           teamRoles: [
@@ -337,7 +396,8 @@ class DemoData {
         Committee(
           id: 'com_school_store',
           title: 'School Store',
-          order: 2,
+          order: 12,
+          positions: [CommitteePosition(title: 'Chair', holder: 'Becky Sher')],
           teamRoles: [
             'Design/Production',
             'Finance',
@@ -359,7 +419,10 @@ class DemoData {
         Committee(
           id: 'com_mulch',
           title: 'Mulch Sale Fundraiser',
-          order: 3,
+          order: 13,
+          positions: [
+            CommitteePosition(title: 'Chair', holder: 'Mary Bittle Koenick')
+          ],
           schedule: 'The mulch sale is held annually in mid-to-late March.',
           teamRoles: [
             'Chair/Co-Chair',
@@ -380,7 +443,10 @@ class DemoData {
         Committee(
           id: 'com_book_sale',
           title: 'Used Book Sale Fundraiser',
-          order: 4,
+          order: 14,
+          positions: [
+            CommitteePosition(title: 'Chair', holder: 'Natalie Shelton')
+          ],
           schedule:
               'Used Book Sale is held annually late February to early March.',
           teamRoles: [

@@ -254,7 +254,8 @@ class FirestoreService {
         uid: 'demo-admin',
         email: 'admin@example.com',
         displayName: 'Alex Admin',
-        role: UserRole.webAdmin),
+        role: UserRole.webAdmin,
+        committees: ['lead_exec', 'com_concessions']),
     const AppUser(
         uid: 'demo-contrib',
         email: 'casey@example.com',
@@ -332,6 +333,7 @@ class FirestoreService {
         for (final e in updated.grants.entries)
           e.key: Timestamp.fromDate(e.value),
       },
+      'committees': updated.committees,
     }, SetOptions(merge: true));
     for (final a in actions) {
       await _db.collection('audit_log').add(AuditEntry(
