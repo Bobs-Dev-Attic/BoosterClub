@@ -3,6 +3,14 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.16.0
+- **New Committees section.** A public **Committees** page (in the main nav)
+  lists the club's standing committees — Concessions, School Store, Mulch Sale,
+  Used Book Sale, and any you add — each with its schedule, team roles, detail
+  sub-sections, an emphasized call-out, and a "Questions?" contact email.
+  Managed in **Admin → Committees** (new `manage_committees` permission), with a
+  starter set seeded from the WJ committee flyers.
+
 ## 1.15.1
 - **Fundraising vendors.** You can now keep a reusable list of vendors/suppliers
   (Admin → Fundraising → **Vendors**) and assign **one or more vendors to each

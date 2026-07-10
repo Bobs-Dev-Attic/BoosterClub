@@ -15,6 +15,8 @@ const List<AppSection> kSections = [
   AppSection('Events', '/events', Icons.event_outlined, Icons.event),
   AppSection('Volunteer', '/volunteering', Icons.volunteer_activism_outlined,
       Icons.volunteer_activism),
+  AppSection('Committees', '/committees', Icons.groups_2_outlined,
+      Icons.groups_2),
   AppSection('Sponsors', '/sponsorships', Icons.handshake_outlined,
       Icons.handshake),
   AppSection('Donate', '/donate', Icons.favorite_outline, Icons.favorite),

@@ -70,6 +70,8 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
       if (can('manage_faqs'))
         _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
+      if (can('manage_committees'))
+        _AdminTab('Committees', Icons.groups_2, (fs) => _CommitteeAdmin(fs)),
       if (can('manage_history'))
         _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
       if (can('manage_gallery'))
@@ -429,6 +431,22 @@ class _FaqAdmin extends StatelessWidget {
         fs: fs,
         subtitle: (q) => q.answer,
         editor: editFaq,
+      );
+}
+
+class _CommitteeAdmin extends StatelessWidget {
+  final FirestoreService fs;
+  const _CommitteeAdmin(this.fs);
+  @override
+  Widget build(BuildContext context) => _AdminList<Committee>(
+        collection: 'committees',
+        stream: fs.committees(),
+        fs: fs,
+        subtitle: (c) => c.teamRoles.isEmpty
+            ? (c.summary)
+            : '${c.teamRoles.length} roles · ${c.teamRoles.take(3).join(', ')}'
+                '${c.teamRoles.length > 3 ? '…' : ''}',
+        editor: editCommittee,
       );
 }
 

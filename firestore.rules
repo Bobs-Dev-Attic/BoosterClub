@@ -81,6 +81,7 @@ service cloud.firestore {
     match /fundraisers/{doc}   { allow read: if true; allow write: if hasPerm('manage_fundraisers'); }
     match /meetings/{doc}      { allow read: if true; allow write: if hasPerm('manage_meetings'); }
     match /faqs/{doc}          { allow read: if true; allow write: if hasPerm('manage_faqs'); }
+    match /committees/{doc}    { allow read: if true; allow write: if hasPerm('manage_committees'); }
     match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
     match /gallery/{doc}       { allow read: if true; allow write: if hasPerm('manage_gallery'); }
     match /legal_documents/{doc} { allow read: if true; allow write: if hasPerm('manage_legal'); }
