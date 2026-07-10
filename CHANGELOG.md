@@ -3,6 +3,13 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.15.1
+- **Fundraising vendors.** You can now keep a reusable list of vendors/suppliers
+  (Admin → Fundraising → **Vendors**) and assign **one or more vendors to each
+  product/item** from the item editor. Assigned vendors show under the item in a
+  campaign, and the same vendor can be reused across products and campaigns.
+  Vendors are managed by Fundraising Admins and readable by fundraising staff.
+
 ## 1.15.0
 - **New Fundraising module (Admin → Fundraising).** A logistics-focused system
   for running product sales (mulch, t-shirts), raffles and similar campaigns —

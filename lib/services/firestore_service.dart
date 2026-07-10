@@ -37,6 +37,7 @@ class FirestoreService {
     _demo['legal_documents'] = List.of(DemoData.legalDocuments());
     _demo['fundraising_campaigns'] = List.of(DemoData.fundraisingCampaigns());
     _demo['fundraising_orders'] = List.of(DemoData.fundraisingOrders());
+    _demo['fundraising_vendors'] = List.of(DemoData.fundraisingVendors());
   }
 
   StreamController<List<ContentItem>> _controllerFor(String c) {
@@ -123,6 +124,10 @@ class FirestoreService {
   Stream<List<FundraisingOrder>> fundraisingOrders() => _stream(
       'fundraising_orders', FundraisingOrder.fromDoc,
       orderBy: 'createdAt', descending: true);
+
+  /// Reusable vendors/suppliers that can be assigned to campaign products.
+  Stream<List<Vendor>> fundraisingVendors() =>
+      _stream('fundraising_vendors', Vendor.fromDoc, orderBy: 'title');
 
   // ---- Writes (used by admins) -----------------------------------------
   Future<void> upsert(String collection, ContentItem item) async {
@@ -230,6 +235,9 @@ class FirestoreService {
     }
     for (final o in DemoData.fundraisingOrders()) {
       await upsert('fundraising_orders', o);
+    }
+    for (final v in DemoData.fundraisingVendors()) {
+      await upsert('fundraising_vendors', v);
     }
   }
 

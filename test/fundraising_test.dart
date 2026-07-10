@@ -87,4 +87,50 @@ void main() {
     expect(find.text('New Order'), findsOneWidget);
     expect(find.text('Total: \$6'), findsOneWidget); // default 1 × Mulch @ $6
   });
+
+  test('product carries vendorIds through fromMap/toMap', () {
+    final p = CampaignProduct.fromMap({
+      'id': 'p',
+      'name': 'Mulch',
+      'price': 6,
+      'vendorIds': ['v_mulch', 'v_alt'],
+    });
+    expect(p.vendorIds, ['v_mulch', 'v_alt']);
+    expect(p.toMap()['vendorIds'], ['v_mulch', 'v_alt']);
+    expect(Vendor.fromDoc('v', {'title': 'Acme', 'contact': 'x'}).title, 'Acme');
+  });
+
+  testWidgets('Vendors registry renders and product shows its vendor',
+      (tester) async {
+    AppConfig.demoMode = true;
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final fs = FirestoreService();
+    const user = AppUser(
+        uid: 'u',
+        email: 'a@b.c',
+        displayName: 'Admin',
+        role: UserRole.fundraisingAdmin);
+
+    await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: FundraisingAdmin(fs: fs, user: user))));
+    await tester.pumpAndSettle();
+
+    // Vendors registry opens and lists the demo vendors.
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Vendors'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Bethesda Landscape Supply'), findsOneWidget);
+    expect(find.text('Rockville Screen Printing'), findsOneWidget);
+
+    // Back to the list, open a campaign; its product shows the vendor name.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Spring Mulch Sale'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Bethesda Landscape Supply'), findsWidgets);
+  });
 }

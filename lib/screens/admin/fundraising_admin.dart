@@ -48,6 +48,12 @@ class FundraisingAdmin extends StatelessWidget {
     ));
   }
 
+  void _openVendors(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => _VendorsScreen(fs: fs, canManage: _canManage),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<FundraisingCampaign>>(
@@ -76,12 +82,19 @@ class FundraisingAdmin extends StatelessWidget {
                         child: Text('Fundraising Campaigns',
                             style: Theme.of(context).textTheme.titleLarge),
                       ),
-                      if (_canManage)
+                      OutlinedButton.icon(
+                        onPressed: () => _openVendors(context),
+                        icon: const Icon(Icons.store_outlined, size: 18),
+                        label: const Text('Vendors'),
+                      ),
+                      if (_canManage) ...[
+                        const SizedBox(width: 8),
                         FilledButton.icon(
                           onPressed: () => _editCampaign(context, null),
                           icon: const Icon(Icons.add),
                           label: const Text('New campaign'),
                         ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -283,7 +296,13 @@ class _CampaignDetailScreen extends StatelessWidget {
               final orders = (ordSnap.data ?? const <FundraisingOrder>[])
                   .where((o) => o.campaignId == campaignId)
                   .toList();
-              return _body(context, campaign, orders);
+              return StreamBuilder<List<Vendor>>(
+                stream: fs.fundraisingVendors(),
+                builder: (context, venSnap) {
+                  final vendors = venSnap.data ?? const <Vendor>[];
+                  return _body(context, campaign, orders, vendors);
+                },
+              );
             },
           ),
         );
@@ -319,7 +338,7 @@ class _CampaignDetailScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, FundraisingCampaign campaign,
-      List<FundraisingOrder> orders) {
+      List<FundraisingOrder> orders, List<Vendor> vendors) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
       children: [
@@ -336,6 +355,7 @@ class _CampaignDetailScreen extends StatelessWidget {
         _ProductsSection(
           campaign: campaign,
           orders: orders,
+          vendors: vendors,
           canManage: _canManage,
           onChanged: (products) => fs.upsert('fundraising_campaigns',
               campaign.copyWith(products: products)),
@@ -530,14 +550,24 @@ class _Dashboard extends StatelessWidget {
 class _ProductsSection extends StatelessWidget {
   final FundraisingCampaign campaign;
   final List<FundraisingOrder> orders;
+  final List<Vendor> vendors;
   final bool canManage;
   final void Function(List<CampaignProduct>) onChanged;
   const _ProductsSection({
     required this.campaign,
     required this.orders,
+    required this.vendors,
     required this.canManage,
     required this.onChanged,
   });
+
+  String _vendorNames(CampaignProduct p) => p.vendorIds
+      .map((id) => vendors
+          .cast<Vendor?>()
+          .firstWhere((v) => v?.id == id, orElse: () => null)
+          ?.title)
+      .whereType<String>()
+      .join(', ');
 
   int _soldFor(String name) => orders.fold(
       0,
@@ -550,7 +580,7 @@ class _ProductsSection extends StatelessWidget {
   Future<void> _edit(BuildContext context, CampaignProduct? existing) async {
     final result = await showDialog<CampaignProduct>(
       context: context,
-      builder: (_) => _ProductDialog(existing: existing),
+      builder: (_) => _ProductDialog(existing: existing, vendors: vendors),
     );
     if (result == null) return;
     final list = List<CampaignProduct>.of(campaign.products);
@@ -592,13 +622,43 @@ class _ProductsSection extends StatelessWidget {
             Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
+                isThreeLine: p.vendorIds.isNotEmpty,
                 title: Text(p.name),
-                subtitle: Text([
-                  _money(p.price),
-                  if (p.options.isNotEmpty) 'Options: ${p.options.join(', ')}',
-                  '${_soldFor(p.name)} sold'
-                      '${p.goalQty != null ? ' / ${p.goalQty} goal' : ''}',
-                ].join('  ·  ')),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text([
+                      _money(p.price),
+                      if (p.options.isNotEmpty)
+                        'Options: ${p.options.join(', ')}',
+                      '${_soldFor(p.name)} sold'
+                          '${p.goalQty != null ? ' / ${p.goalQty} goal' : ''}',
+                    ].join('  ·  ')),
+                    if (p.vendorIds.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Icon(Icons.store_outlined,
+                                size: 13, color: scheme.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                _vendorNames(p).isEmpty
+                                    ? '${p.vendorIds.length} vendor(s)'
+                                    : _vendorNames(p),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: scheme.onSurfaceVariant),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
                 trailing: canManage
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1043,7 +1103,8 @@ class _CampaignDialogState extends State<_CampaignDialog> {
 
 class _ProductDialog extends StatefulWidget {
   final CampaignProduct? existing;
-  const _ProductDialog({this.existing});
+  final List<Vendor> vendors;
+  const _ProductDialog({this.existing, this.vendors = const []});
 
   @override
   State<_ProductDialog> createState() => _ProductDialogState();
@@ -1055,6 +1116,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   late final TextEditingController _price;
   late final TextEditingController _options;
   late final TextEditingController _goal;
+  late final Set<String> _vendorIds;
 
   @override
   void initState() {
@@ -1066,6 +1128,7 @@ class _ProductDialogState extends State<_ProductDialog> {
     _options = TextEditingController(text: e?.options.join(', '));
     _goal =
         TextEditingController(text: e?.goalQty != null ? '${e!.goalQty}' : '');
+    _vendorIds = {...?e?.vendorIds};
   }
 
   @override
@@ -1094,6 +1157,256 @@ class _ProductDialogState extends State<_ProductDialog> {
         price: double.tryParse(_price.text.trim()) ?? 0,
         options: options,
         goalQty: int.tryParse(_goal.text.trim()),
+        // Keep only vendors that still exist, plus any pre-existing ids when
+        // the vendor list wasn't available to edit.
+        vendorIds: widget.vendors.isEmpty
+            ? (e?.vendorIds ?? const [])
+            : _vendorIds.toList(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AlertDialog(
+      title: Text(widget.existing == null ? 'New Item' : 'Edit Item'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                    controller: _name,
+                    decoration: _dec('Item name'),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _price,
+                    decoration: _dec('Unit price (\$)'),
+                    keyboardType: TextInputType.number),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _options,
+                    decoration:
+                        _dec('Options (comma-separated, e.g. S, M, L)')),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _goal,
+                    decoration: _dec('Target quantity (optional)'),
+                    keyboardType: TextInputType.number),
+                const SizedBox(height: 16),
+                Text('Vendor(s) / supplier(s)',
+                    style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                if (widget.vendors.isEmpty)
+                  Text(
+                    'No vendors yet — add them with the Vendors button on the '
+                    'campaigns screen, then assign them here.',
+                    style: TextStyle(
+                        fontSize: 12, color: scheme.onSurfaceVariant),
+                  )
+                else
+                  for (final v in widget.vendors)
+                    CheckboxListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _vendorIds.contains(v.id),
+                      onChanged: (checked) => setState(() {
+                        if (checked ?? false) {
+                          _vendorIds.add(v.id);
+                        } else {
+                          _vendorIds.remove(v.id);
+                        }
+                      }),
+                      title: Text(v.title),
+                      subtitle:
+                          v.contact.isEmpty ? null : Text(v.contact),
+                    ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        FilledButton(onPressed: _save, child: const Text('Save')),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Vendors registry
+// ===========================================================================
+
+class _VendorsScreen extends StatelessWidget {
+  final FirestoreService fs;
+  final bool canManage;
+  const _VendorsScreen({required this.fs, required this.canManage});
+
+  Future<void> _edit(BuildContext context, Vendor? existing) async {
+    final result = await showDialog<Vendor>(
+      context: context,
+      builder: (_) => _VendorDialog(existing: existing),
+    );
+    if (result != null) await fs.upsert('fundraising_vendors', result);
+  }
+
+  Future<void> _delete(BuildContext context, Vendor v) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete vendor?'),
+        content: Text(
+            '“${v.title}” will be removed. Products that referenced it will '
+            'simply show one fewer vendor.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await fs.delete('fundraising_vendors', v.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Vendors'),
+        actions: [
+          if (canManage)
+            IconButton(
+              tooltip: 'Add vendor',
+              icon: const Icon(Icons.add),
+              onPressed: () => _edit(context, null),
+            ),
+        ],
+      ),
+      body: StreamBuilder<List<Vendor>>(
+        stream: fs.fundraisingVendors(),
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return EmptyState(
+                icon: Icons.error_outline,
+                message: 'Something went wrong.\n${snap.error}');
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final vendors = snap.data!;
+          if (vendors.isEmpty) {
+            return const EmptyState(
+              icon: Icons.store_outlined,
+              message: 'No vendors yet — add your suppliers to assign them to '
+                  'products.',
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              for (final v in vendors)
+                Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.store_outlined),
+                    title: Text(v.title),
+                    subtitle: Text([
+                      if (v.contact.isNotEmpty) v.contact,
+                      if (v.notes.isNotEmpty) v.notes,
+                    ].join('\n')),
+                    isThreeLine: v.contact.isNotEmpty && v.notes.isNotEmpty,
+                    trailing: canManage
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Edit',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () => _edit(context, v),
+                              ),
+                              IconButton(
+                                tooltip: 'Delete',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () => _delete(context, v),
+                              ),
+                            ],
+                          )
+                        : null,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+      floatingActionButton: canManage
+          ? FloatingActionButton.extended(
+              onPressed: () => _edit(context, null),
+              icon: const Icon(Icons.add),
+              label: const Text('Add vendor'),
+            )
+          : null,
+    );
+  }
+}
+
+class _VendorDialog extends StatefulWidget {
+  final Vendor? existing;
+  const _VendorDialog({this.existing});
+
+  @override
+  State<_VendorDialog> createState() => _VendorDialogState();
+}
+
+class _VendorDialogState extends State<_VendorDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _name;
+  late final TextEditingController _contact;
+  late final TextEditingController _notes;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    _name = TextEditingController(text: e?.title);
+    _contact = TextEditingController(text: e?.contact);
+    _notes = TextEditingController(text: e?.notes);
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _contact.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final e = widget.existing;
+    Navigator.pop(
+      context,
+      Vendor(
+        id: e?.id ?? 'new',
+        title: _name.text.trim(),
+        contact: _contact.text.trim(),
+        notes: _notes.text.trim(),
+        createdAt: e?.createdAt,
       ),
     );
   }
@@ -1101,7 +1414,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.existing == null ? 'New Item' : 'Edit Item'),
+      title: Text(widget.existing == null ? 'New Vendor' : 'Edit Vendor'),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -1111,24 +1424,18 @@ class _ProductDialogState extends State<_ProductDialog> {
             children: [
               TextFormField(
                   controller: _name,
-                  decoration: _dec('Item name'),
+                  decoration: _dec('Vendor / company name'),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Required' : null),
               const SizedBox(height: 12),
               TextFormField(
-                  controller: _price,
-                  decoration: _dec('Unit price (\$)'),
-                  keyboardType: TextInputType.number),
+                  controller: _contact,
+                  decoration: _dec('Contact (phone / email, optional)')),
               const SizedBox(height: 12),
               TextFormField(
-                  controller: _options,
-                  decoration:
-                      _dec('Options (comma-separated, e.g. S, M, L)')),
-              const SizedBox(height: 12),
-              TextFormField(
-                  controller: _goal,
-                  decoration: _dec('Target quantity (optional)'),
-                  keyboardType: TextInputType.number),
+                  controller: _notes,
+                  decoration: _dec('Notes (optional)'),
+                  maxLines: 2),
             ],
           ),
         ),

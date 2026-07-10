@@ -102,6 +102,14 @@ service cloud.firestore {
         || hasPerm('fulfill_fundraising');
       allow delete: if hasPerm('manage_fundraising');
     }
+    // Vendors/suppliers. Readable by any fundraising role; only managers edit.
+    match /fundraising_vendors/{doc} {
+      allow read: if hasPerm('manage_fundraising')
+        || hasPerm('fulfill_fundraising')
+        || hasPerm('supply_fundraising')
+        || hasPerm('sponsor_fundraising');
+      allow write: if hasPerm('manage_fundraising');
+    }
 
     // ---- Funding requests ---------------------------------------------
     // Anyone may read. Members and above may submit. Only funding managers may

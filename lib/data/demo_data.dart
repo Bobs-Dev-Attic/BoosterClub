@@ -334,9 +334,17 @@ class DemoData {
           createdAt: _future(-15),
           products: const [
             CampaignProduct(
-                id: 'p_hw', name: '3 cu ft Hardwood Mulch', price: 6, goalQty: 800),
+                id: 'p_hw',
+                name: '3 cu ft Hardwood Mulch',
+                price: 6,
+                goalQty: 800,
+                vendorIds: ['v_mulch']),
             CampaignProduct(
-                id: 'p_bk', name: '3 cu ft Black Dyed Mulch', price: 7, goalQty: 300),
+                id: 'p_bk',
+                name: '3 cu ft Black Dyed Mulch',
+                price: 7,
+                goalQty: 300,
+                vendorIds: ['v_mulch']),
           ],
         ),
         FundraisingCampaign(
@@ -357,7 +365,8 @@ class DemoData {
                 name: 'Spirit Tee',
                 price: 18,
                 options: ['YS', 'YM', 'YL', 'S', 'M', 'L', 'XL', 'XXL'],
-                goalQty: 150),
+                goalQty: 150,
+                vendorIds: ['v_print']),
           ],
         ),
         FundraisingCampaign(
@@ -427,6 +436,23 @@ class DemoData {
             OrderItem(
                 productName: 'Spirit Tee', option: 'YM', quantity: 1, unitPrice: 18),
           ],
+        ),
+      ];
+
+  static List<Vendor> fundraisingVendors() => [
+        Vendor(
+          id: 'v_mulch',
+          title: 'Bethesda Landscape Supply',
+          contact: 'orders@bethesdalandscape.example · (301) 555-0142',
+          notes: 'Delivers pallets to the school lot; net-15 terms.',
+          createdAt: _future(-40),
+        ),
+        Vendor(
+          id: 'v_print',
+          title: 'Rockville Screen Printing',
+          contact: '(301) 555-0199',
+          notes: '10-day turnaround once art is approved.',
+          createdAt: _future(-40),
         ),
       ];
 }
