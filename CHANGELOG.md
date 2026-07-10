@@ -3,6 +3,12 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.14.4
+- **Added a welcome / call-to-action intro to the Volunteering page.** A
+  friendly banner above the opportunities invites parents to get involved
+  ("Show Your Walter Johnson Pride! VOLUNTEER for Boosters!"), explains that
+  roles fit any schedule/location/skill set and that everyone is welcome.
+
 ## 1.14.3
 - **Gallery images can be marked public or hidden.** The image editor now has a
   **"Show on public gallery"** toggle, so a Contributor can keep an image in the
