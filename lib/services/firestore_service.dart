@@ -35,6 +35,8 @@ class FirestoreService {
     _demo['history_facts'] = List.of(DemoData.historyFacts());
     _demo['gallery'] = List.of(DemoData.gallery());
     _demo['legal_documents'] = List.of(DemoData.legalDocuments());
+    _demo['fundraising_campaigns'] = List.of(DemoData.fundraisingCampaigns());
+    _demo['fundraising_orders'] = List.of(DemoData.fundraisingOrders());
   }
 
   StreamController<List<ContentItem>> _controllerFor(String c) {
@@ -55,9 +57,18 @@ class FirestoreService {
     bool descending = false,
   }) {
     if (AppConfig.demoMode) {
-      return _controllerFor(collection).stream.map(
-            (items) => items.cast<T>(),
-          );
+      final controller = _controllerFor(collection);
+      // Emit the current snapshot to EVERY new subscriber immediately (like
+      // Firestore's snapshots()), then forward live updates. The shared
+      // broadcast controller only runs onListen for its first listener, so a
+      // second concurrent view (e.g. a detail screen) would otherwise wait
+      // forever for its first event.
+      return Stream<List<ContentItem>>.multi((sink) {
+        sink.add(List.of(_demo[collection] ?? const []));
+        final sub =
+            controller.stream.listen(sink.add, onError: sink.addError);
+        sink.onCancel = () => sub.cancel();
+      }).map((items) => items.cast<T>());
     }
     Query<Map<String, dynamic>> q = _db.collection(collection);
     if (orderBy != null) q = q.orderBy(orderBy, descending: descending);
@@ -102,6 +113,16 @@ class FirestoreService {
   /// set keyed by a stable id (`terms`, `privacy`).
   Stream<List<LegalDocument>> legalDocuments() =>
       _stream('legal_documents', LegalDocument.fromDoc);
+
+  /// Logistics-focused fundraising campaigns (product sales, raffles, …).
+  Stream<List<FundraisingCampaign>> fundraisingCampaigns() => _stream(
+      'fundraising_campaigns', FundraisingCampaign.fromDoc,
+      orderBy: 'createdAt', descending: true);
+
+  /// Customer orders across all campaigns. Callers filter by `campaignId`.
+  Stream<List<FundraisingOrder>> fundraisingOrders() => _stream(
+      'fundraising_orders', FundraisingOrder.fromDoc,
+      orderBy: 'createdAt', descending: true);
 
   // ---- Writes (used by admins) -----------------------------------------
   Future<void> upsert(String collection, ContentItem item) async {
@@ -203,6 +224,12 @@ class FirestoreService {
     }
     for (final l in DemoData.legalDocuments()) {
       await upsert('legal_documents', l);
+    }
+    for (final c in DemoData.fundraisingCampaigns()) {
+      await upsert('fundraising_campaigns', c);
+    }
+    for (final o in DemoData.fundraisingOrders()) {
+      await upsert('fundraising_orders', o);
     }
   }
 

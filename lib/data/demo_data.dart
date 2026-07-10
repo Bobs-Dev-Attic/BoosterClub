@@ -315,6 +315,120 @@ class DemoData {
         LegalDocument(
             id: 'privacy', title: 'Privacy Policy', body: _privacyBody),
       ];
+
+  static List<FundraisingCampaign> fundraisingCampaigns() => [
+        FundraisingCampaign(
+          id: 'camp_mulch',
+          title: 'Spring Mulch Sale',
+          description:
+              'Annual hardwood mulch sale — pickup or driveway delivery '
+              'the first weekend of April.',
+          type: CampaignType.product,
+          stage: CampaignStage.selling,
+          goalAmount: 6000,
+          startsAt: _future(-14),
+          endsAt: _future(21),
+          vendorName: 'Bethesda Landscape Supply',
+          vendorContact: 'orders@bethesdalandscape.example · (301) 555-0142',
+          notes: 'Delivery teams meet at the WJ back lot at 7:30am.',
+          createdAt: _future(-15),
+          products: const [
+            CampaignProduct(
+                id: 'p_hw', name: '3 cu ft Hardwood Mulch', price: 6, goalQty: 800),
+            CampaignProduct(
+                id: 'p_bk', name: '3 cu ft Black Dyed Mulch', price: 7, goalQty: 300),
+          ],
+        ),
+        FundraisingCampaign(
+          id: 'camp_shirt',
+          title: 'Wildcat Spirit T-Shirts',
+          description: 'Screen-printed spirit tees in green and white.',
+          type: CampaignType.product,
+          stage: CampaignStage.ordering,
+          goalAmount: 2500,
+          startsAt: _future(-30),
+          endsAt: _future(-2),
+          vendorName: 'Rockville Screen Printing',
+          vendorContact: '(301) 555-0199',
+          createdAt: _future(-31),
+          products: const [
+            CampaignProduct(
+                id: 'p_tee',
+                name: 'Spirit Tee',
+                price: 18,
+                options: ['YS', 'YM', 'YL', 'S', 'M', 'L', 'XL', 'XXL'],
+                goalQty: 150),
+          ],
+        ),
+        FundraisingCampaign(
+          id: 'camp_raffle',
+          title: 'Grand Prize Raffle',
+          description: '50/50 raffle drawn at the spring concert.',
+          type: CampaignType.raffle,
+          stage: CampaignStage.planning,
+          goalAmount: 3000,
+          startsAt: _future(10),
+          endsAt: _future(45),
+          createdAt: _future(-3),
+          products: const [
+            CampaignProduct(id: 'p_1', name: 'Single Ticket', price: 5),
+            CampaignProduct(id: 'p_6', name: '6-Ticket Book', price: 25),
+          ],
+        ),
+      ];
+
+  static List<FundraisingOrder> fundraisingOrders() => [
+        FundraisingOrder(
+          id: 'ord_1',
+          campaignId: 'camp_mulch',
+          customerName: 'The Nguyen Family',
+          customerContact: '(240) 555-0111',
+          deliveryAddress: '9312 Cedar Lane, Bethesda, MD 20814',
+          paymentStatus: PaymentStatus.paid,
+          paymentMethod: 'Check #1042',
+          fulfillmentStatus: FulfillmentStatus.pending,
+          assignedTo: 'Team A',
+          createdAt: _future(-6),
+          items: const [
+            OrderItem(
+                productName: '3 cu ft Hardwood Mulch', quantity: 20, unitPrice: 6),
+          ],
+        ),
+        FundraisingOrder(
+          id: 'ord_2',
+          campaignId: 'camp_mulch',
+          customerName: 'Coach Rivera',
+          customerContact: 'rivera@example.com',
+          deliveryAddress: 'Pickup at school',
+          paymentStatus: PaymentStatus.unpaid,
+          paymentMethod: 'Cash on pickup',
+          fulfillmentStatus: FulfillmentStatus.pending,
+          createdAt: _future(-4),
+          items: const [
+            OrderItem(
+                productName: '3 cu ft Black Dyed Mulch', quantity: 10, unitPrice: 7),
+            OrderItem(
+                productName: '3 cu ft Hardwood Mulch', quantity: 5, unitPrice: 6),
+          ],
+        ),
+        FundraisingOrder(
+          id: 'ord_3',
+          campaignId: 'camp_shirt',
+          customerName: 'Dana Park',
+          customerContact: '(301) 555-0173',
+          paymentStatus: PaymentStatus.paid,
+          paymentMethod: 'Online',
+          fulfillmentStatus: FulfillmentStatus.delivered,
+          assignedTo: 'Front office',
+          createdAt: _future(-10),
+          items: const [
+            OrderItem(
+                productName: 'Spirit Tee', option: 'L', quantity: 2, unitPrice: 18),
+            OrderItem(
+                productName: 'Spirit Tee', option: 'YM', quantity: 1, unitPrice: 18),
+          ],
+        ),
+      ];
 }
 
 // ---- Starter legal documents ---------------------------------------------

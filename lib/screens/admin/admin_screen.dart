@@ -13,6 +13,7 @@ import '../../widgets/common.dart';
 import 'content_forms.dart';
 import 'donations_admin.dart';
 import 'event_import.dart';
+import 'fundraising_admin.dart';
 import 'gallery_admin.dart';
 import 'users_admin.dart';
 
@@ -59,6 +60,12 @@ class AdminScreen extends StatelessWidget {
         _AdminTab('Funding', Icons.request_quote, (fs) => _FundingAdmin(fs)),
       if (can('manage_fundraisers'))
         _AdminTab('Fundraisers', Icons.savings, (fs) => _FundraiserAdmin(fs)),
+      if (can('manage_fundraising') ||
+          can('fulfill_fundraising') ||
+          can('supply_fundraising') ||
+          can('sponsor_fundraising'))
+        _AdminTab('Fundraising', Icons.campaign,
+            (fs) => FundraisingAdmin(fs: fs, user: user)),
       if (can('manage_meetings'))
         _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
       if (can('manage_faqs'))

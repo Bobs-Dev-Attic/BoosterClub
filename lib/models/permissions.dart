@@ -13,6 +13,10 @@ const List<String> kPermissions = [
   'manage_gallery',
   'manage_legal',
   'manage_donations',
+  'manage_fundraising',
+  'fulfill_fundraising',
+  'supply_fundraising',
+  'sponsor_fundraising',
   'seed_content',
   'manage_users',
 ];
@@ -29,6 +33,10 @@ const Map<String, String> kPermissionLabels = {
   'manage_gallery': 'Gallery',
   'manage_legal': 'Legal (Terms & Privacy)',
   'manage_donations': 'Donations',
+  'manage_fundraising': 'Fundraising Campaigns (manage)',
+  'fulfill_fundraising': 'Fundraising — fulfill/deliver orders',
+  'supply_fundraising': 'Fundraising — vendor/supply view',
+  'sponsor_fundraising': 'Fundraising — sponsor view',
   'seed_content': 'Load sample content',
   'manage_users': 'Users & Roles',
 };
