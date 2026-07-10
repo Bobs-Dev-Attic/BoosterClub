@@ -693,12 +693,16 @@ class CampaignProduct {
   /// Optional target number of units to sell (for progress display).
   final int? goalQty;
 
+  /// Ids of the [Vendor]s that supply this item (may be more than one).
+  final List<String> vendorIds;
+
   const CampaignProduct({
     required this.id,
     required this.name,
     this.price = 0,
     this.options = const [],
     this.goalQty,
+    this.vendorIds = const [],
   });
 
   factory CampaignProduct.fromMap(Map<String, dynamic> d) => CampaignProduct(
@@ -707,6 +711,7 @@ class CampaignProduct {
         price: (d['price'] ?? 0).toDouble(),
         options: List<String>.from(d['options'] ?? const []),
         goalQty: (d['goalQty'] as num?)?.toInt(),
+        vendorIds: List<String>.from(d['vendorIds'] ?? const []),
       );
 
   Map<String, dynamic> toMap() => {
@@ -715,16 +720,72 @@ class CampaignProduct {
         'price': price,
         'options': options,
         'goalQty': goalQty,
+        'vendorIds': vendorIds,
       };
 
-  CampaignProduct copyWith(
-          {String? name, double? price, List<String>? options, int? goalQty}) =>
+  CampaignProduct copyWith({
+    String? name,
+    double? price,
+    List<String>? options,
+    int? goalQty,
+    List<String>? vendorIds,
+  }) =>
       CampaignProduct(
         id: id,
         name: name ?? this.name,
         price: price ?? this.price,
         options: options ?? this.options,
         goalQty: goalQty ?? this.goalQty,
+        vendorIds: vendorIds ?? this.vendorIds,
+      );
+}
+
+/// A supplier/vendor that can be assigned to one or more campaign products
+/// (e.g. a mulch supplier or a screen printer). Reusable across campaigns.
+class Vendor implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title; // vendor / company name
+  final String contact; // phone / email / point of contact
+  final String notes;
+  final DateTime? createdAt;
+
+  const Vendor({
+    required this.id,
+    required this.title,
+    this.contact = '',
+    this.notes = '',
+    this.createdAt,
+  });
+
+  @override
+  String get summary => contact;
+
+  factory Vendor.fromDoc(String id, Map<String, dynamic> d) => Vendor(
+        id: id,
+        title: d['title'] ?? '',
+        contact: d['contact'] ?? '',
+        notes: d['notes'] ?? '',
+        createdAt: _ts(d['createdAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'contact': contact,
+        'notes': notes,
+        'createdAt': createdAt != null
+            ? Timestamp.fromDate(createdAt!)
+            : FieldValue.serverTimestamp(),
+      };
+
+  Vendor copyWith({String? title, String? contact, String? notes}) => Vendor(
+        id: id,
+        title: title ?? this.title,
+        contact: contact ?? this.contact,
+        notes: notes ?? this.notes,
+        createdAt: createdAt,
       );
 }
 
