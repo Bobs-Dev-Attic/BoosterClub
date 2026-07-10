@@ -1072,3 +1072,95 @@ class FundraisingOrder implements ContentItem {
         createdAt: createdAt,
       );
 }
+
+// ===========================================================================
+// Committees
+//
+// Standing volunteer committees (Concessions, School Store, Mulch Sale, …).
+// Each lists the roles on its team plus optional detail sections and a contact.
+// ===========================================================================
+
+/// A labelled sub-block within a committee (e.g. "Outdoor Concessions" →
+/// "2 adults + 6 students (required)").
+class CommitteeSection {
+  final String heading;
+  final String body;
+  const CommitteeSection({required this.heading, this.body = ''});
+
+  factory CommitteeSection.fromMap(Map<String, dynamic> d) => CommitteeSection(
+        heading: d['heading'] ?? '',
+        body: d['body'] ?? '',
+      );
+
+  Map<String, dynamic> toMap() => {'heading': heading, 'body': body};
+}
+
+class Committee implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title;
+
+  /// When/where it runs (e.g. "Held annually in mid-to-late March").
+  final String schedule;
+
+  /// Intro paragraph.
+  final String description;
+
+  /// The roles that make up the committee's team.
+  final List<String> teamRoles;
+
+  /// Optional detail sub-blocks.
+  final List<CommitteeSection> sections;
+
+  /// An emphasised call-out (e.g. "ADULT DRIVERS REQUIRED…").
+  final String highlight;
+
+  /// Contact email for questions.
+  final String contactEmail;
+
+  /// Sort order within the Committees page.
+  final int order;
+
+  const Committee({
+    required this.id,
+    required this.title,
+    this.schedule = '',
+    this.description = '',
+    this.teamRoles = const [],
+    this.sections = const [],
+    this.highlight = '',
+    this.contactEmail = '',
+    this.order = 0,
+  });
+
+  @override
+  String get summary => description.isNotEmpty ? description : schedule;
+
+  factory Committee.fromDoc(String id, Map<String, dynamic> d) => Committee(
+        id: id,
+        title: d['title'] ?? '',
+        schedule: d['schedule'] ?? '',
+        description: d['description'] ?? '',
+        teamRoles: List<String>.from(d['teamRoles'] ?? const []),
+        sections: [
+          for (final s in (d['sections'] as List? ?? const []))
+            CommitteeSection.fromMap(Map<String, dynamic>.from(s as Map)),
+        ],
+        highlight: d['highlight'] ?? '',
+        contactEmail: d['contactEmail'] ?? '',
+        order: (d['order'] as num?)?.toInt() ?? 0,
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'schedule': schedule,
+        'description': description,
+        'teamRoles': teamRoles,
+        'sections': [for (final s in sections) s.toMap()],
+        'highlight': highlight,
+        'contactEmail': contactEmail,
+        'order': order,
+      };
+}

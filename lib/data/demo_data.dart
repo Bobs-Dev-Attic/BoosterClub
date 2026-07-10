@@ -310,6 +310,96 @@ class DemoData {
         ),
       ];
 
+  static List<Committee> committees() => const [
+        Committee(
+          id: 'com_concessions',
+          title: 'Concessions',
+          order: 1,
+          description:
+              'Clubs and teams run concession stands during events hosted at WJ.',
+          teamRoles: [
+            'Scheduling Coordinator',
+            'Event Staffing Coordinator',
+            'Pizza Delivery Coordinator',
+            'Restock/Shopping',
+            'Volunteer Coordinator',
+          ],
+          sections: [
+            CommitteeSection(
+                heading: 'Outdoor Concessions',
+                body: '2 adults + 6 students (required)'),
+            CommitteeSection(
+                heading: 'Indoor Concessions',
+                body: '1 adult + 3 students (required)'),
+          ],
+          highlight: 'Students earn \$\$\$\$ for their clubs/teams!',
+        ),
+        Committee(
+          id: 'com_school_store',
+          title: 'School Store',
+          order: 2,
+          teamRoles: [
+            'Design/Production',
+            'Finance',
+            'Volunteer Scheduling',
+          ],
+          sections: [
+            CommitteeSection(
+                heading: 'School Store in Cafeteria',
+                body:
+                    'One adult runs the school store on Wednesdays and Thursdays '
+                    'from 11am - 12pm (short training required).'),
+            CommitteeSection(
+                heading: 'Pop-up Stores',
+                body:
+                    'Volunteers needed to sell WJ swag and setup/breakdown the '
+                    'store for large events at WJ.'),
+          ],
+        ),
+        Committee(
+          id: 'com_mulch',
+          title: 'Mulch Sale Fundraiser',
+          order: 3,
+          schedule: 'The mulch sale is held annually in mid-to-late March.',
+          teamRoles: [
+            'Chair/Co-Chair',
+            'Mulch Supplier Coordinator',
+            'Truck & Forklift Rentals',
+            'Fork Lift Drivers',
+            'Food & Drink Coordinator',
+            'Order Dispatch & Routes',
+            'Student Check-in & SSL Coordinator',
+            'T-shirt Design/Sponsorships',
+            'Yard Sign Coordinators',
+          ],
+          highlight:
+              'ADULT DRIVERS REQUIRED — Students deliver but adults MUST drive '
+              'delivery trucks and cars to "chase" them!',
+          contactEmail: 'wjmulchsale@gmail.com',
+        ),
+        Committee(
+          id: 'com_book_sale',
+          title: 'Used Book Sale Fundraiser',
+          order: 4,
+          schedule:
+              'Used Book Sale is held annually late February to early March.',
+          teamRoles: [
+            'Chair/Co-Chair',
+            'Marketing',
+            'Operations/Logistics',
+            'Sorting Day Coordinators',
+            'SSL Coordinator',
+            'T-shirt Design/Sponsorships',
+            'Yard Sign Coordinators',
+          ],
+          highlight:
+              'LOTS of parent and student volunteers are needed to sort '
+              '15,000-20,000 books on selected Saturdays & Sundays in December, '
+              'January and February.',
+          contactEmail: 'wjusedbooksale@gmail.com',
+        ),
+      ];
+
   static List<LegalDocument> legalDocuments() => const [
         LegalDocument(id: 'terms', title: 'Terms of Use', body: _termsBody),
         LegalDocument(

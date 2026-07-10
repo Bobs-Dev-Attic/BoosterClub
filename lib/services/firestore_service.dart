@@ -32,6 +32,7 @@ class FirestoreService {
     _demo['fundraisers'] = List.of(DemoData.fundraisers());
     _demo['meetings'] = List.of(DemoData.meetings());
     _demo['faqs'] = List.of(DemoData.faqs());
+    _demo['committees'] = List.of(DemoData.committees());
     _demo['history_facts'] = List.of(DemoData.historyFacts());
     _demo['gallery'] = List.of(DemoData.gallery());
     _demo['legal_documents'] = List.of(DemoData.legalDocuments());
@@ -102,6 +103,9 @@ class FirestoreService {
 
   Stream<List<FaqItem>> faqs() =>
       _stream('faqs', FaqItem.fromDoc, orderBy: 'order');
+
+  Stream<List<Committee>> committees() =>
+      _stream('committees', Committee.fromDoc, orderBy: 'order');
 
   Stream<List<HistoryFact>> historyFacts() =>
       _stream('history_facts', HistoryFact.fromDoc, orderBy: 'month');
@@ -220,6 +224,9 @@ class FirestoreService {
     }
     for (final q in DemoData.faqs()) {
       await upsert('faqs', q);
+    }
+    for (final c in DemoData.committees()) {
+      await upsert('committees', c);
     }
     for (final h in DemoData.historyFacts()) {
       await upsert('history_facts', h);

@@ -1110,6 +1110,107 @@ Future<FaqItem?> editFaq(BuildContext context, FaqItem? q) {
   );
 }
 
+Future<Committee?> editCommittee(BuildContext context, Committee? c) {
+  final title = TextEditingController(text: c?.title);
+  final order = TextEditingController(text: (c?.order ?? 0).toString());
+  final schedule = TextEditingController(text: c?.schedule);
+  final description = TextEditingController(text: c?.description);
+  final roles = TextEditingController(text: c?.teamRoles.join('\n'));
+  final sections = TextEditingController(
+    text: c?.sections
+        .map((s) => s.body.isEmpty ? s.heading : '${s.heading} | ${s.body}')
+        .join('\n'),
+  );
+  final highlight = TextEditingController(text: c?.highlight);
+  final email = TextEditingController(text: c?.contactEmail);
+
+  List<String> parseRoles() => roles.text
+      .split('\n')
+      .map((r) => r.trim())
+      .where((r) => r.isNotEmpty)
+      .toList();
+
+  List<CommitteeSection> parseSections() => sections.text
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .map((line) {
+        final i = line.indexOf('|');
+        if (i < 0) return CommitteeSection(heading: line);
+        return CommitteeSection(
+          heading: line.substring(0, i).trim(),
+          body: line.substring(i + 1).trim(),
+        );
+      })
+      .toList();
+
+  return _formDialog<Committee>(
+    context,
+    title: c == null ? 'New Committee' : 'Edit Committee',
+    build: (key, submit) => Form(
+      key: key,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+              controller: title,
+              decoration: _dec('Committee name'),
+              validator: _required),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: order,
+              decoration: _dec('Display order'),
+              keyboardType: TextInputType.number),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: schedule,
+              decoration: _dec('Schedule / when it runs (optional)')),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: description,
+              decoration: _dec('Intro description (optional)'),
+              maxLines: 2),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: roles,
+              decoration:
+                  _dec('Team roles — one per line'),
+              maxLines: 6),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: sections,
+              decoration: _dec(
+                  'Detail sections — one per line, "Heading | text" (optional)'),
+              maxLines: 4),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: highlight,
+              decoration: _dec('Highlighted call-out (optional)'),
+              maxLines: 2),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: email,
+              decoration: _dec('Contact email (optional)')),
+          _actions(
+            key,
+            () => submit(Committee(
+              id: c?.id ?? 'new',
+              title: title.text.trim(),
+              order: int.tryParse(order.text) ?? 0,
+              schedule: schedule.text.trim(),
+              description: description.text.trim(),
+              teamRoles: parseRoles(),
+              sections: parseSections(),
+              highlight: highlight.text.trim(),
+              contactEmail: email.text.trim(),
+            )),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 // ---- Legal document ------------------------------------------------------
 /// Full-screen editor for a legal/policy document (Terms of Use, Privacy
 /// Policy). The body supports light markup: `# `/`## ` headings, `- ` bullets,

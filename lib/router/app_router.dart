@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../screens/account/account_screen.dart';
 import '../screens/admin/admin_screen.dart';
+import '../screens/committees_screen.dart';
 import '../screens/donate_screen.dart';
 import '../screens/events_screen.dart';
 import '../screens/faq_screen.dart';
@@ -65,6 +66,9 @@ GoRouter buildRouter() {
           GoRoute(
               path: '/volunteering',
               pageBuilder: (_, __) => _page(const VolunteeringScreen())),
+          GoRoute(
+              path: '/committees',
+              pageBuilder: (_, __) => _page(const CommitteesScreen())),
           GoRoute(
               path: '/sponsorships',
               pageBuilder: (_, __) => _page(const SponsorshipsScreen())),
