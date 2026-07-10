@@ -3,6 +3,20 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.17.0
+- **Committee positions, leadership groups & member memberships.**
+  - Each committee (or new **leadership group**) can now list **positions** —
+    a title and who holds it (e.g. "Chair — Dawn Harris", "Commissioner
+    (Sports) — OPEN"). Managed in the committee editor ("Title | Person" lines).
+  - A committee can be marked as a **Leadership** group (Executive Committee,
+    Class Chairs), shown in a dedicated Leadership area on the renamed
+    **Leadership & Committees** page, with an **Open positions** call-out
+    highlighting unfilled roles. Seeded from the WJ leadership chart.
+  - A member can now **belong to one or more committees**. Web Admins assign
+    memberships in Admin → Users & Roles (audit-logged); members see their
+    committees on their account page. Members can't change their own
+    memberships.
+
 ## 1.16.0
 - **New Committees section.** A public **Committees** page (in the main nav)
   lists the club's standing committees — Concessions, School Store, Mulch Sale,

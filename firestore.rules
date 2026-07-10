@@ -60,7 +60,8 @@ service cloud.firestore {
       // delegated grants (only a Web Admin can).
       allow update: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.role == resource.data.role
-        && request.resource.data.get('grants', {}) == resource.data.get('grants', {});
+        && request.resource.data.get('grants', {}) == resource.data.get('grants', {})
+        && request.resource.data.get('committees', []) == resource.data.get('committees', []);
       // Web Admins (manage_users) can manage any profile, roles and grants.
       allow read, write: if hasPerm('manage_users');
     }

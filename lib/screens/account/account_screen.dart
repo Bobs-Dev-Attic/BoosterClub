@@ -188,6 +188,13 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        const SectionHeader(
+          title: 'My Committees',
+          subtitle: 'Committees you\'ve been added to. Ask a Web Admin to '
+              'update your memberships.',
+        ),
+        _MyCommittees(user: user),
       ],
     );
   }
@@ -656,6 +663,49 @@ class _SecurityTabState extends State<_SecurityTab> {
           label: const Text('Sign out'),
         ),
       ],
+    );
+  }
+}
+
+/// Lists the committees the member belongs to (from their profile), resolved to
+/// names via the live committees list.
+class _MyCommittees extends StatelessWidget {
+  final AppUser user;
+  const _MyCommittees({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    if (user.committees.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text('You\'re not on any committees yet.'),
+        ),
+      );
+    }
+    final fs = context.read<FirestoreService>();
+    return StreamBuilder<List<Committee>>(
+      stream: fs.committees(),
+      builder: (context, snap) {
+        final all = snap.data ?? const <Committee>[];
+        final mine =
+            all.where((c) => user.committees.contains(c.id)).toList();
+        final names = mine.isEmpty
+            ? user.committees // fall back to ids until they load
+            : mine.map((c) => c.title).toList();
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final n in names) Pill(n, icon: Icons.groups_2_outlined),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

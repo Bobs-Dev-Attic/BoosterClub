@@ -1121,8 +1121,14 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
         .map((s) => s.body.isEmpty ? s.heading : '${s.heading} | ${s.body}')
         .join('\n'),
   );
+  final positions = TextEditingController(
+    text: c?.positions
+        .map((p) => p.holder.isEmpty ? p.title : '${p.title} | ${p.holder}')
+        .join('\n'),
+  );
   final highlight = TextEditingController(text: c?.highlight);
   final email = TextEditingController(text: c?.contactEmail);
+  var category = c?.category ?? CommitteeCategory.committee;
 
   List<String> parseRoles() => roles.text
       .split('\n')
@@ -1144,6 +1150,20 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
       })
       .toList();
 
+  List<CommitteePosition> parsePositions() => positions.text
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .map((line) {
+        final i = line.indexOf('|');
+        if (i < 0) return CommitteePosition(title: line);
+        return CommitteePosition(
+          title: line.substring(0, i).trim(),
+          holder: line.substring(i + 1).trim(),
+        );
+      })
+      .toList();
+
   return _formDialog<Committee>(
     context,
     title: c == null ? 'New Committee' : 'Edit Committee',
@@ -1154,13 +1174,32 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
         children: [
           TextFormField(
               controller: title,
-              decoration: _dec('Committee name'),
+              decoration: _dec('Name (committee or leadership group)'),
               validator: _required),
+          const SizedBox(height: 12),
+          StatefulBuilder(
+            builder: (context, setLocal) =>
+                DropdownButtonFormField<CommitteeCategory>(
+              initialValue: category,
+              decoration: _dec('Type'),
+              items: [
+                for (final v in CommitteeCategory.values)
+                  DropdownMenuItem(value: v, child: Text(v.label)),
+              ],
+              onChanged: (v) => setLocal(() => category = v ?? category),
+            ),
+          ),
           const SizedBox(height: 12),
           TextFormField(
               controller: order,
               decoration: _dec('Display order'),
               keyboardType: TextInputType.number),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: positions,
+              decoration: _dec(
+                  'Positions — one per line, "Title | Person" (blank or OPEN = open)'),
+              maxLines: 5),
           const SizedBox(height: 12),
           TextFormField(
               controller: schedule,
@@ -1174,8 +1213,8 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
           TextFormField(
               controller: roles,
               decoration:
-                  _dec('Team roles — one per line'),
-              maxLines: 6),
+                  _dec('Team roles — one per line (optional)'),
+              maxLines: 5),
           const SizedBox(height: 12),
           TextFormField(
               controller: sections,
@@ -1197,6 +1236,8 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
               id: c?.id ?? 'new',
               title: title.text.trim(),
               order: int.tryParse(order.text) ?? 0,
+              category: category,
+              positions: parsePositions(),
               schedule: schedule.text.trim(),
               description: description.text.trim(),
               teamRoles: parseRoles(),

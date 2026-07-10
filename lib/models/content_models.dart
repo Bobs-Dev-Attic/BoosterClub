@@ -1095,6 +1095,40 @@ class CommitteeSection {
   Map<String, dynamic> toMap() => {'heading': heading, 'body': body};
 }
 
+/// Whether a group is a working committee or an organisation leadership group
+/// (e.g. Executive Committee, Class Chairs).
+enum CommitteeCategory { committee, leadership }
+
+extension CommitteeCategoryX on CommitteeCategory {
+  String get label => switch (this) {
+        CommitteeCategory.committee => 'Committee',
+        CommitteeCategory.leadership => 'Leadership',
+      };
+  static CommitteeCategory parse(String? v) =>
+      CommitteeCategory.values.firstWhere((e) => e.name == v,
+          orElse: () => CommitteeCategory.committee);
+}
+
+/// A named position within a committee/leadership group and who holds it — e.g.
+/// "President → Mary Bittle Koenick" or "Commissioner (Sports) → OPEN".
+class CommitteePosition {
+  final String title;
+  final String holder; // person's name; empty or "OPEN" means unfilled
+  const CommitteePosition({required this.title, this.holder = ''});
+
+  /// True when the position has no assigned person.
+  bool get isOpen =>
+      holder.trim().isEmpty || holder.trim().toUpperCase() == 'OPEN';
+
+  factory CommitteePosition.fromMap(Map<String, dynamic> d) =>
+      CommitteePosition(
+        title: d['title'] ?? '',
+        holder: d['holder'] ?? '',
+      );
+
+  Map<String, dynamic> toMap() => {'title': title, 'holder': holder};
+}
+
 class Committee implements ContentItem {
   @override
   final String id;
@@ -1122,6 +1156,12 @@ class Committee implements ContentItem {
   /// Sort order within the Committees page.
   final int order;
 
+  /// Working committee vs. an organisation leadership group.
+  final CommitteeCategory category;
+
+  /// Named positions and who holds them (Chair, President, class chair, …).
+  final List<CommitteePosition> positions;
+
   const Committee({
     required this.id,
     required this.title,
@@ -1132,10 +1172,18 @@ class Committee implements ContentItem {
     this.highlight = '',
     this.contactEmail = '',
     this.order = 0,
+    this.category = CommitteeCategory.committee,
+    this.positions = const [],
   });
 
   @override
   String get summary => description.isNotEmpty ? description : schedule;
+
+  bool get isLeadership => category == CommitteeCategory.leadership;
+
+  /// Positions still needing someone.
+  List<CommitteePosition> get openPositions =>
+      positions.where((p) => p.isOpen).toList();
 
   factory Committee.fromDoc(String id, Map<String, dynamic> d) => Committee(
         id: id,
@@ -1150,6 +1198,11 @@ class Committee implements ContentItem {
         highlight: d['highlight'] ?? '',
         contactEmail: d['contactEmail'] ?? '',
         order: (d['order'] as num?)?.toInt() ?? 0,
+        category: CommitteeCategoryX.parse(d['category']),
+        positions: [
+          for (final p in (d['positions'] as List? ?? const []))
+            CommitteePosition.fromMap(Map<String, dynamic>.from(p as Map)),
+        ],
       );
 
   @override
@@ -1162,5 +1215,7 @@ class Committee implements ContentItem {
         'highlight': highlight,
         'contactEmail': contactEmail,
         'order': order,
+        'category': category.name,
+        'positions': [for (final p in positions) p.toMap()],
       };
 }
