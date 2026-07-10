@@ -32,7 +32,11 @@ service cloud.firestore {
       return role == 'webAdmin'
         || (role == 'administrator' && perm != 'manage_users')
         || (role == 'contributor' && (perm == 'manage_meetings' || perm == 'manage_history' || perm == 'manage_gallery'))
-        || (role == 'policyAdmin' && perm == 'manage_legal');
+        || (role == 'policyAdmin' && perm == 'manage_legal')
+        || (role == 'fundraisingAdmin' && (perm == 'manage_fundraising' || perm == 'fulfill_fundraising' || perm == 'supply_fundraising' || perm == 'sponsor_fundraising'))
+        || (role == 'fundraisingVolunteer' && perm == 'fulfill_fundraising')
+        || (role == 'fundraisingVendor' && perm == 'supply_fundraising')
+        || (role == 'fundraisingSponsor' && perm == 'sponsor_fundraising');
     }
 
     // Is there an active (non-expired) delegated grant for [perm]?
@@ -80,6 +84,24 @@ service cloud.firestore {
     match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
     match /gallery/{doc}       { allow read: if true; allow write: if hasPerm('manage_gallery'); }
     match /legal_documents/{doc} { allow read: if true; allow write: if hasPerm('manage_legal'); }
+
+    // ---- Fundraising campaigns & orders --------------------------------
+    // Campaigns are public (no PII) so a future public page can show them.
+    // Orders hold customer PII (name, contact, address) so reads are limited
+    // to fundraising staff. Volunteers may create/update orders (take an order,
+    // mark it packed/delivered); only managers may delete.
+    match /fundraising_campaigns/{doc} {
+      allow read: if true;
+      allow write: if hasPerm('manage_fundraising');
+    }
+    match /fundraising_orders/{doc} {
+      allow read: if hasPerm('manage_fundraising')
+        || hasPerm('fulfill_fundraising')
+        || hasPerm('supply_fundraising');
+      allow create, update: if hasPerm('manage_fundraising')
+        || hasPerm('fulfill_fundraising');
+      allow delete: if hasPerm('manage_fundraising');
+    }
 
     // ---- Funding requests ---------------------------------------------
     // Anyone may read. Members and above may submit. Only funding managers may

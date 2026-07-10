@@ -13,6 +13,20 @@ Set<String> rolePermissions(UserRole role) {
       return {'manage_meetings', 'manage_history', 'manage_gallery'};
     case UserRole.policyAdmin:
       return {'manage_legal'};
+    case UserRole.fundraisingAdmin:
+      // Full control of the fundraising module, including every sub-view.
+      return {
+        'manage_fundraising',
+        'fulfill_fundraising',
+        'supply_fundraising',
+        'sponsor_fundraising',
+      };
+    case UserRole.fundraisingVolunteer:
+      return {'fulfill_fundraising'};
+    case UserRole.fundraisingVendor:
+      return {'supply_fundraising'};
+    case UserRole.fundraisingSponsor:
+      return {'sponsor_fundraising'};
     default:
       return {};
   }
@@ -26,6 +40,10 @@ enum UserRole {
   member,
   contributor,
   sponsor,
+  fundraisingVendor,
+  fundraisingSponsor,
+  fundraisingVolunteer,
+  fundraisingAdmin,
   policyAdmin,
   administrator,
   webAdmin;
@@ -49,6 +67,14 @@ enum UserRole {
         return 'Contributor';
       case UserRole.sponsor:
         return 'Sponsor';
+      case UserRole.fundraisingVendor:
+        return 'Fundraising Vendor';
+      case UserRole.fundraisingSponsor:
+        return 'Fundraising Sponsor';
+      case UserRole.fundraisingVolunteer:
+        return 'Fundraising Volunteer';
+      case UserRole.fundraisingAdmin:
+        return 'Fundraising Admin';
       case UserRole.policyAdmin:
         return 'Policy Admin';
       case UserRole.administrator:

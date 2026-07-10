@@ -3,6 +3,29 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.15.0
+- **New Fundraising module (Admin → Fundraising).** A logistics-focused system
+  for running product sales (mulch, t-shirts), raffles and similar campaigns —
+  separate from the simple donation-goal "Fundraisers".
+  - **Campaigns** with a type, description, fundraising goal, start/end dates,
+    vendor/supplier info, and a **workflow** that moves through Planning →
+    Selling → Ordering → Delivery → Closed.
+  - **Products/items** per campaign with price, optional variants (e.g. t-shirt
+    sizes) and a target quantity.
+  - **Customer orders** with line items, delivery/pickup address, an assigned
+    volunteer, **payment status** (Unpaid/Paid/Refunded) and **fulfillment
+    status** (Pending/Packed/Delivered/Canceled), each changeable inline.
+  - A **dashboard** per campaign: orders, units, collected vs outstanding,
+    to-deliver vs delivered, and progress toward goal.
+- **Four new roles** for fundraising: **Fundraising Admin** (full control of the
+  module), **Fundraising Volunteer** (add orders and update
+  payment/fulfillment/delivery), **Fundraising Vendor** and **Fundraising
+  Sponsor** (scoped view permissions). All are assignable in Admin → Users &
+  Roles. (Dedicated self-service portal pages for volunteers/vendors/sponsors
+  are planned for a later pass.)
+- Fixed a demo-mode data bug where a second live view of the same collection
+  (e.g. a detail screen) never received its initial snapshot.
+
 ## 1.14.4
 - **Added a welcome / call-to-action intro to the Volunteering page.** A
   friendly banner above the opportunities invites parents to get involved
