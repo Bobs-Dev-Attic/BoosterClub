@@ -228,29 +228,59 @@ class DemoData {
           id: 'q1',
           question: 'What is the Booster Club?',
           answer:
-              'We are a parent- and community-run nonprofit that raises funds and volunteers to support all athletic and arts programs at Walter Johnson High School.',
+              'The WJ All-School Booster Club is comprised of parents, staff and '
+              'students who support the notion that extracurricular activities '
+              'are an integral part of the educational experience. Our Booster '
+              'Club is unique because we support all WJ extracurricular '
+              'activities, not just sports.',
           order: 1,
         ),
         const FaqItem(
           id: 'q2',
-          question: 'How do I become a member?',
-          answer:
-              'Create an account in this app and choose a membership level, or attend any general meeting. Members get voting rights and early event access.',
+          question: 'How does the Booster Club raise money?',
+          answer: 'We have three primary sources of support:\n\n'
+              '• Membership — Your membership dues go directly to support WJ '
+              'student activities.\n'
+              '• Fundraisers — We coordinate two major fundraising events in '
+              'the Spring: the Mulch and Used Book Sales.\n'
+              '• School Store & Concessions — We operate the school store as '
+              'well as the indoor & outdoor concession stands at sports events.',
           order: 2,
         ),
         const FaqItem(
           id: 'q3',
-          question: 'Where does the money go?',
+          question: 'Why should I get involved in the Booster Club?',
           answer:
-              'Funds are distributed through our grant process to teams and clubs for uniforms, equipment, travel, scholarships and facility improvements.',
+              'Volunteering your time in the Booster Club will help ensure that '
+              'we can support all of the clubs and teams at WJ. The Booster Club '
+              'is a great way to be involved, find out what is happening at WJ '
+              'and meet parents throughout the WJ community — and most of all, '
+              'make new friends.',
           order: 3,
         ),
         const FaqItem(
           id: 'q4',
-          question: 'How can my business sponsor?',
-          answer:
-              'Visit the Sponsorships section to view tiers and benefits, then contact us directly or create a sponsor account.',
+          question: 'How do clubs & teams request funding?',
+          answer: 'To be considered for funding, a group must:\n\n'
+              '• Be officially recognized by the school\n'
+              '• Have a school bank account\n'
+              '• Meet the criteria set by the Booster Club for approval\n'
+              '• Support the Booster Club through volunteering in concessions, '
+              'at major fundraisers (Book Sale, Mulch and others), and '
+              'membership\n'
+              '• Present the request at a regularly scheduled Booster Club '
+              'meeting',
           order: 4,
+        ),
+        const FaqItem(
+          id: 'q5',
+          question: 'What are some examples of the groups we support?',
+          answer: 'WJ STAGE, Poms, STEP Team, Minority Scholars, Track & Field, '
+              'Robotics, Science Olympiad, The Pitch, Leadership & Government, '
+              'Baseball, Lacrosse, Mock Trial, Softball, Basketball, '
+              'Cheerleading, Honor Societies, Football, Choral Music, Model UN, '
+              'Post-Prom Party, and more!',
+          order: 5,
         ),
       ];
 
