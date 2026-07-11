@@ -3,6 +3,19 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.1
+- **Security: funding requests are no longer publicly readable** (repo review
+  item #2). The `funding_requests` collection was world-readable, exposing
+  applicant PII (coach/parent emails & names, application history) to anyone.
+  Now:
+  - The summary is readable only by **signed-in** users (the public Funding page
+    shows a sign-in prompt to guests); it no longer contains any contact PII.
+  - Contact PII moves to a **manager-only** private subdocument
+    (`funding_requests/{id}/private/detail`), readable only with
+    `manage_funding`. The submitting member writes it once but can't read
+    others'. (A manager-facing in-app viewer for this detail is a follow-up;
+    the data was never shown in-app before, so nothing is lost.)
+
 ## 1.18.0
 - **Security: hardened QR-code sign-in** (repo review item #1). Previously the
   Cloud Function minted a Firebase custom token and wrote it onto the

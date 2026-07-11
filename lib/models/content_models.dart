@@ -191,6 +191,10 @@ class Sponsorship implements ContentItem {
 }
 
 /// A funding request submitted by a team / club seeking Booster Club support.
+/// The public/members-visible summary of a funding request. Contact PII (coach
+/// & parent emails, parent name, application history) is intentionally NOT here
+/// — it lives in a separate [FundingApplicationDetail] document readable only by
+/// funding managers. See firestore.rules (`funding_requests/{id}/private`).
 class FundingRequest implements ContentItem {
   @override
   final String id;
@@ -198,21 +202,15 @@ class FundingRequest implements ContentItem {
   final String title; // Sport team or club name
   final String description; // How the funds will be used
   final double amountRequested;
-  final String requestedBy; // Coach/sponsor name (kept for card display)
+  final String requestedBy; // Coach/sponsor name (shown on the card)
   final String status; // pending / approved / declined / funded
   final DateTime? submittedAt;
   final String? imageUrl;
 
-  // Expanded application fields.
+  // Non-sensitive summary fields.
   final String groupType; // 'sport' | 'club' | ''
-  final String coachName;
-  final String coachEmail;
-  final String parentName;
-  final String parentEmail;
   final int studentCount;
   final bool metWithLeadership; // met with AD (sports) / Asst. Principal (clubs)
-  final String previousRequests;
-  final String boosterMembersInfo;
   final List<String> fundraisingContributions;
 
   const FundingRequest({
@@ -225,14 +223,8 @@ class FundingRequest implements ContentItem {
     this.submittedAt,
     this.imageUrl,
     this.groupType = '',
-    this.coachName = '',
-    this.coachEmail = '',
-    this.parentName = '',
-    this.parentEmail = '',
     this.studentCount = 0,
     this.metWithLeadership = false,
-    this.previousRequests = '',
-    this.boosterMembersInfo = '',
     this.fundraisingContributions = const [],
   });
 
@@ -250,14 +242,8 @@ class FundingRequest implements ContentItem {
         submittedAt: _ts(d['submittedAt']),
         imageUrl: d['imageUrl'],
         groupType: d['groupType'] ?? '',
-        coachName: d['coachName'] ?? '',
-        coachEmail: d['coachEmail'] ?? '',
-        parentName: d['parentName'] ?? '',
-        parentEmail: d['parentEmail'] ?? '',
         studentCount: (d['studentCount'] ?? 0) as int,
         metWithLeadership: d['metWithLeadership'] ?? false,
-        previousRequests: d['previousRequests'] ?? '',
-        boosterMembersInfo: d['boosterMembersInfo'] ?? '',
         fundraisingContributions:
             List<String>.from(d['fundraisingContributions'] ?? const []),
       );
@@ -271,14 +257,8 @@ class FundingRequest implements ContentItem {
         'status': status,
         'imageUrl': imageUrl,
         'groupType': groupType,
-        'coachName': coachName,
-        'coachEmail': coachEmail,
-        'parentName': parentName,
-        'parentEmail': parentEmail,
         'studentCount': studentCount,
         'metWithLeadership': metWithLeadership,
-        'previousRequests': previousRequests,
-        'boosterMembersInfo': boosterMembersInfo,
         'fundraisingContributions': fundraisingContributions,
         'submittedAt':
             submittedAt != null ? Timestamp.fromDate(submittedAt!) : FieldValue.serverTimestamp(),
@@ -301,16 +281,54 @@ class FundingRequest implements ContentItem {
         submittedAt: submittedAt,
         imageUrl: imageUrl,
         groupType: groupType,
-        coachName: coachName,
-        coachEmail: coachEmail,
-        parentName: parentName,
-        parentEmail: parentEmail,
         studentCount: studentCount,
         metWithLeadership: metWithLeadership,
-        previousRequests: previousRequests,
-        boosterMembersInfo: boosterMembersInfo,
         fundraisingContributions: fundraisingContributions,
       );
+}
+
+/// The private half of a funding request — contact PII and internal application
+/// context. Stored at `funding_requests/{id}/private/detail`, readable only by
+/// funding managers (`manage_funding`). Kept out of the public summary doc so a
+/// signed-in member (or the public) can never read applicants' emails.
+class FundingApplicationDetail {
+  final String coachEmail;
+  final String parentName;
+  final String parentEmail;
+  final String previousRequests;
+  final String boosterMembersInfo;
+
+  const FundingApplicationDetail({
+    this.coachEmail = '',
+    this.parentName = '',
+    this.parentEmail = '',
+    this.previousRequests = '',
+    this.boosterMembersInfo = '',
+  });
+
+  bool get isEmpty =>
+      coachEmail.isEmpty &&
+      parentName.isEmpty &&
+      parentEmail.isEmpty &&
+      previousRequests.isEmpty &&
+      boosterMembersInfo.isEmpty;
+
+  factory FundingApplicationDetail.fromMap(Map<String, dynamic> d) =>
+      FundingApplicationDetail(
+        coachEmail: d['coachEmail'] ?? '',
+        parentName: d['parentName'] ?? '',
+        parentEmail: d['parentEmail'] ?? '',
+        previousRequests: d['previousRequests'] ?? '',
+        boosterMembersInfo: d['boosterMembersInfo'] ?? '',
+      );
+
+  Map<String, dynamic> toMap() => {
+        'coachEmail': coachEmail,
+        'parentName': parentName,
+        'parentEmail': parentEmail,
+        'previousRequests': previousRequests,
+        'boosterMembersInfo': boosterMembersInfo,
+      };
 }
 
 /// A fundraising event / campaign with a goal and running total.

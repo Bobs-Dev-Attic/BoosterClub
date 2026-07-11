@@ -114,12 +114,24 @@ service cloud.firestore {
     }
 
     // ---- Funding requests ---------------------------------------------
-    // Anyone may read. Members and above may submit. Only funding managers may
+    // The summary doc is readable by any SIGNED-IN user (not the public) —
+    // requests concern student teams/clubs, so they should not be scrapable
+    // anonymously. Members and above may submit. Only funding managers may
     // update status or delete.
+    //
+    // Contact PII (coach/parent emails & names, application history) lives in a
+    // private subdocument that ONLY funding managers can read. The submitting
+    // member may create it (once) but never read others'.
     match /funding_requests/{doc} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if userRole() in ['member', 'contributor', 'sponsor', 'administrator', 'webAdmin'];
       allow update, delete: if hasPerm('manage_funding');
+
+      match /private/{sub} {
+        allow read: if hasPerm('manage_funding');
+        allow create: if userRole() in ['member', 'contributor', 'sponsor', 'administrator', 'webAdmin'];
+        allow update, delete: if hasPerm('manage_funding');
+      }
     }
 
     // ---- Donations ----------------------------------------------------

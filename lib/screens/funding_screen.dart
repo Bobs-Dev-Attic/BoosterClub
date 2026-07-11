@@ -57,7 +57,16 @@ class FundingScreen extends StatelessWidget {
                     ),
               ),
             ),
-          StreamListView<FundingRequest>(
+          if (!auth.isSignedIn)
+            const Padding(
+              padding: EdgeInsets.only(top: 40),
+              child: EmptyState(
+                icon: Icons.lock_outline,
+                message: 'Please sign in to view funding requests.',
+              ),
+            )
+          else
+            StreamListView<FundingRequest>(
             stream: fs.fundingRequests(),
             emptyIcon: Icons.request_quote_outlined,
             emptyMessage: 'No funding requests yet.',
@@ -248,26 +257,30 @@ class _FundingFormDialogState extends State<_FundingFormDialog> {
         imageUrl = await widget.fs
             .uploadImage(_imageBytes!, _imageName, 'funding', now.millisecondsSinceEpoch);
       }
-      await widget.fs.submitFundingRequest(FundingRequest(
-        id: 'new',
-        title: _nameC.text.trim(),
-        description: _usageC.text.trim(),
-        amountRequested: double.tryParse(_amountC.text.trim()) ?? 0,
-        requestedBy: _coachC.text.trim(),
-        status: 'pending',
-        submittedAt: now,
-        imageUrl: imageUrl,
-        groupType: _groupType,
-        coachName: _coachC.text.trim(),
-        coachEmail: _coachEmailC.text.trim(),
-        parentName: _parentC.text.trim(),
-        parentEmail: _parentEmailC.text.trim(),
-        studentCount: int.tryParse(_studentsC.text.trim()) ?? 0,
-        metWithLeadership: _metLeadership,
-        previousRequests: _prevC.text.trim(),
-        boosterMembersInfo: _membersC.text.trim(),
-        fundraisingContributions: _contributions.toList(),
-      ));
+      await widget.fs.submitFundingRequest(
+        FundingRequest(
+          id: 'new',
+          title: _nameC.text.trim(),
+          description: _usageC.text.trim(),
+          amountRequested: double.tryParse(_amountC.text.trim()) ?? 0,
+          requestedBy: _coachC.text.trim(),
+          status: 'pending',
+          submittedAt: now,
+          imageUrl: imageUrl,
+          groupType: _groupType,
+          studentCount: int.tryParse(_studentsC.text.trim()) ?? 0,
+          metWithLeadership: _metLeadership,
+          fundraisingContributions: _contributions.toList(),
+        ),
+        // Contact PII goes into the manager-only private detail document.
+        FundingApplicationDetail(
+          coachEmail: _coachEmailC.text.trim(),
+          parentName: _parentC.text.trim(),
+          parentEmail: _parentEmailC.text.trim(),
+          previousRequests: _prevC.text.trim(),
+          boosterMembersInfo: _membersC.text.trim(),
+        ),
+      );
       navigator.pop();
       messenger.showSnackBar(
           const SnackBar(content: Text('Funding request submitted.')));

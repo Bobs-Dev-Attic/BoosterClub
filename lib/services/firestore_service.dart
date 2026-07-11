@@ -187,8 +187,35 @@ class FirestoreService {
   }
 
   /// Records a submitted funding request (available to members).
-  Future<void> submitFundingRequest(FundingRequest req) =>
-      upsert('funding_requests', req);
+  /// Submits a funding request as two documents: the members-visible summary
+  /// and a manager-only private detail (contact PII) at
+  /// `funding_requests/{id}/private/detail`.
+  Future<void> submitFundingRequest(
+      FundingRequest req, FundingApplicationDetail detail) async {
+    if (AppConfig.demoMode) {
+      final list = _demo.putIfAbsent('funding_requests', () => []);
+      list.add(req);
+      _emit('funding_requests');
+      return;
+    }
+    final ref = await _db.collection('funding_requests').add(req.toMap());
+    if (!detail.isEmpty) {
+      await ref.collection('private').doc('detail').set(detail.toMap());
+    }
+  }
+
+  /// Manager-only read of a funding request's private applicant detail.
+  Future<FundingApplicationDetail?> fundingApplicationDetail(String id) async {
+    if (AppConfig.demoMode) return null;
+    final snap = await _db
+        .collection('funding_requests')
+        .doc(id)
+        .collection('private')
+        .doc('detail')
+        .get();
+    if (!snap.exists) return null;
+    return FundingApplicationDetail.fromMap(snap.data()!);
+  }
 
   /// Uploads a meeting-minutes PDF to Firebase Storage and returns its public
   /// download URL. In demo mode returns a placeholder URL.
