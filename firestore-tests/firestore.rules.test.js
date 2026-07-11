@@ -86,10 +86,10 @@ test('users: signed-in can read; guest cannot', async () => {
   await assertFails(getDoc(doc(db(null), 'users/alice')));
 });
 
-test('users: owner can edit profile but not role/grants/committees', async () => {
+test('users: owner can edit profile but not role/grants', async () => {
   await seedUser('alice', 'member');
   const d = db('alice');
-  // Editing a normal profile field keeps role/grants/committees unchanged → OK.
+  // Editing a normal profile field keeps role/grants unchanged → OK.
   await assertSucceeds(
     setDoc(doc(d, 'users/alice'), {
       email: 'alice@x.org',
@@ -104,21 +104,14 @@ test('users: owner can edit profile but not role/grants/committees', async () =>
   await assertFails(
     updateDoc(doc(d, 'users/alice'), { grants: { manage_gallery: future() } }),
   );
-  // Adding yourself to a committee is denied.
-  await assertFails(
-    updateDoc(doc(d, 'users/alice'), { committees: ['lead_exec'] }),
-  );
 });
 
-test('users: only manage_users may change another user role/committees', async () => {
+test('users: only manage_users may change another user role', async () => {
   await seedUser('alice', 'member');
   await seedUser('boss', 'webAdmin');
   await assertFails(updateDoc(doc(db('alice'), 'users/boss'), { role: 'member' }));
   await assertSucceeds(
-    updateDoc(doc(db('boss'), 'users/alice'), {
-      role: 'contributor',
-      committees: ['lead_exec'],
-    }),
+    updateDoc(doc(db('boss'), 'users/alice'), { role: 'contributor' }),
   );
 });
 
@@ -291,6 +284,64 @@ test('committees: public read; only manage_committees writes', async () => {
   await assertFails(setDoc(doc(db('mem'), 'committees/c2'), { title: 'x' }));
   await seedUser('admin', 'administrator');
   await assertSucceeds(setDoc(doc(db('admin'), 'committees/c3'), { title: 'x' }));
+});
+
+test('committee_members: public read; only managers assign', async () => {
+  await seed('committee_members/c1__u1', {
+    committeeId: 'c1',
+    userId: 'u1',
+    userName: 'Jane',
+    roleIds: ['chair'],
+  });
+  // The roster is public (names only, like the roster it replaced).
+  await assertSucceeds(getDoc(doc(db(null), 'committee_members/c1__u1')));
+  // A plain member cannot add themselves to a committee.
+  await seedUser('mem', 'member');
+  await assertFails(
+    setDoc(doc(db('mem'), 'committee_members/c1__mem'), {
+      committeeId: 'c1',
+      userId: 'mem',
+      userName: 'Mem',
+      roleIds: ['chair'],
+    }),
+  );
+  // A committee manager can.
+  await seedUser('admin', 'administrator');
+  await assertSucceeds(
+    setDoc(doc(db('admin'), 'committee_members/c1__x'), {
+      committeeId: 'c1',
+      userId: 'x',
+      userName: 'X',
+      roleIds: [],
+    }),
+  );
+});
+
+test('teams & team_members: signed-in read; only managers write', async () => {
+  await seed('teams/t1', { title: 'Events Crew' });
+  await seed('team_members/t1__u1', { teamId: 't1', userId: 'u1', userName: 'Jane' });
+  // Teams are internal — guests cannot read.
+  await assertFails(getDoc(doc(db(null), 'teams/t1')));
+  await seedUser('mem', 'member');
+  await assertSucceeds(getDoc(doc(db('mem'), 'teams/t1')));
+  await assertSucceeds(getDoc(doc(db('mem'), 'team_members/t1__u1')));
+  // Members cannot add themselves to a team.
+  await assertFails(
+    setDoc(doc(db('mem'), 'team_members/t1__mem'), {
+      teamId: 't1',
+      userId: 'mem',
+      userName: 'Mem',
+    }),
+  );
+  await seedUser('admin', 'administrator');
+  await assertSucceeds(setDoc(doc(db('admin'), 'teams/t2'), { title: 'New' }));
+  await assertSucceeds(
+    setDoc(doc(db('admin'), 'team_members/t1__x'), {
+      teamId: 't1',
+      userId: 'x',
+      userName: 'X',
+    }),
+  );
 });
 
 test('fundraising_orders: PII gated to fundraising staff', async () => {

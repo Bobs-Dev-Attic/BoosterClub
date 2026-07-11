@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../data/demo_data.dart';
 import '../../data/local_history.dart';
+import '../../models/app_user.dart';
 import '../../models/content_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
@@ -118,9 +119,12 @@ class _AdminScreenState extends State<AdminScreen> {
       if (can('manage_meetings'))
         _AdminTab('Meetings', Icons.groups, _AdminCategory.organization,
             (fs) => _MeetingAdmin(fs)),
-      if (can('manage_committees'))
+      if (can('manage_committees')) ...[
         _AdminTab('Committees', Icons.groups_2, _AdminCategory.organization,
             (fs) => _CommitteeAdmin(fs)),
+        _AdminTab('Teams', Icons.diversity_3, _AdminCategory.organization,
+            (fs) => _TeamsAdmin(fs)),
+      ],
       if (can('manage_legal'))
         _AdminTab('Legal', Icons.gavel, _AdminCategory.organization,
             (fs) => _LegalAdmin(fs)),
@@ -377,6 +381,10 @@ class _AdminList<T extends ContentItem> extends StatelessWidget {
   final String Function(T) subtitle;
   final Future<T?> Function(BuildContext, T?) editor;
   final Widget? extraAction;
+
+  /// Optional extra action shown before Edit/Delete on each row (e.g. a
+  /// "Manage members" button for committees and teams).
+  final Widget Function(BuildContext, T)? itemLeadingAction;
   const _AdminList({
     required this.collection,
     required this.stream,
@@ -384,6 +392,7 @@ class _AdminList<T extends ContentItem> extends StatelessWidget {
     required this.subtitle,
     required this.editor,
     this.extraAction,
+    this.itemLeadingAction,
   });
 
   Future<void> _edit(BuildContext context, T? existing) async {
@@ -429,6 +438,8 @@ class _AdminList<T extends ContentItem> extends StatelessWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (itemLeadingAction != null)
+                            itemLeadingAction!(context, item),
                           IconButton(
                             tooltip: 'Edit',
                             icon: const Icon(Icons.edit_outlined),
@@ -590,11 +601,41 @@ class _CommitteeAdmin extends StatelessWidget {
         collection: 'committees',
         stream: fs.committees(),
         fs: fs,
-        subtitle: (c) => c.teamRoles.isEmpty
+        subtitle: (c) => c.roles.isEmpty
             ? (c.summary)
-            : '${c.teamRoles.length} roles · ${c.teamRoles.take(3).join(', ')}'
-                '${c.teamRoles.length > 3 ? '…' : ''}',
+            : '${c.roles.length} role${c.roles.length == 1 ? '' : 's'} · '
+                '${c.roles.take(3).map((r) => r.title).join(', ')}'
+                '${c.roles.length > 3 ? '…' : ''}',
         editor: editCommittee,
+        itemLeadingAction: (context, c) => TextButton.icon(
+          onPressed: () => showDialog(
+            context: context,
+            builder: (_) => _CommitteeMembersDialog(fs: fs, committee: c),
+          ),
+          icon: const Icon(Icons.group_add, size: 18),
+          label: const Text('Members'),
+        ),
+      );
+}
+
+class _TeamsAdmin extends StatelessWidget {
+  final FirestoreService fs;
+  const _TeamsAdmin(this.fs);
+  @override
+  Widget build(BuildContext context) => _AdminList<Team>(
+        collection: 'teams',
+        stream: fs.teams(),
+        fs: fs,
+        subtitle: (t) => t.description.isEmpty ? 'Team' : t.description,
+        editor: editTeam,
+        itemLeadingAction: (context, t) => TextButton.icon(
+          onPressed: () => showDialog(
+            context: context,
+            builder: (_) => _TeamMembersDialog(fs: fs, team: t),
+          ),
+          icon: const Icon(Icons.group_add, size: 18),
+          label: const Text('Members'),
+        ),
       );
 }
 
@@ -910,6 +951,285 @@ class _OnThisDayDialogState extends State<_OnThisDayDialog> {
                         ),
             ),
           ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Committee & Team membership managers
+//
+// Membership lives in dedicated join collections (committee_members,
+// team_members) rather than on the user document, so these dialogs read/write
+// those records directly via FirestoreService.
+// ===========================================================================
+
+/// Shows a searchable list of app users to add, excluding those already in the
+/// group. Returns the chosen user, or null if cancelled.
+Future<AppUser?> _pickUser(
+    BuildContext context, FirestoreService fs, Set<String> excludeIds) {
+  return showDialog<AppUser>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Add a member'),
+      content: SizedBox(
+        width: 420,
+        height: 380,
+        child: StreamBuilder<List<AppUser>>(
+          stream: fs.users(),
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final users = (snap.data ?? const <AppUser>[])
+                .where((u) => !excludeIds.contains(u.uid))
+                .toList();
+            if (users.isEmpty) {
+              return const Center(child: Text('No more users to add.'));
+            }
+            return ListView.builder(
+              itemCount: users.length,
+              itemBuilder: (context, i) {
+                final u = users[i];
+                return ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: Text(u.displayName),
+                  subtitle: Text(u.email),
+                  onTap: () => Navigator.pop(context, u),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Checkbox picker for the committee roles a member holds.
+Future<void> _editCommitteeMemberRoles(BuildContext context,
+    FirestoreService fs, Committee committee, CommitteeMember member) async {
+  final selected = {...member.roleIds};
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setLocal) => AlertDialog(
+        title: Text('Roles — ${member.userName}'),
+        content: SizedBox(
+          width: 400,
+          child: committee.roles.isEmpty
+              ? const Text(
+                  'This committee has no roles yet. Add roles by editing the '
+                  'committee, then assign them here.')
+              : SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final r in committee.roles)
+                        CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          value: selected.contains(r.id),
+                          title: Text(r.title),
+                          onChanged: (v) => setLocal(() {
+                            if (v == true) {
+                              selected.add(r.id);
+                            } else {
+                              selected.remove(r.id);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (saved == true) {
+    await fs.setCommitteeMemberRoles(member, selected.toList());
+  }
+}
+
+/// Lists a committee's members, with add / edit-roles / remove actions.
+class _CommitteeMembersDialog extends StatelessWidget {
+  final FirestoreService fs;
+  final Committee committee;
+  const _CommitteeMembersDialog({required this.fs, required this.committee});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Members — ${committee.title}'),
+      content: SizedBox(
+        width: 520,
+        height: 440,
+        child: StreamBuilder<List<CommitteeMember>>(
+          stream: fs.committeeMembers(),
+          builder: (context, snap) {
+            final members = (snap.data ?? const <CommitteeMember>[])
+                .where((m) => m.committeeId == committee.id)
+                .toList()
+              ..sort((a, b) => a.userName
+                  .toLowerCase()
+                  .compareTo(b.userName.toLowerCase()));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      final existing = {for (final m in members) m.userId};
+                      final user = await _pickUser(context, fs, existing);
+                      if (user != null) {
+                        await fs.addCommitteeMember(committee, user);
+                      }
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add member'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: members.isEmpty
+                      ? const Center(child: Text('No members yet.'))
+                      : ListView.separated(
+                          itemCount: members.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final m = members[i];
+                            final roleTitles = [
+                              for (final id in m.roleIds)
+                                committee.roleById(id)?.title,
+                            ].whereType<String>().toList();
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(m.userName),
+                              subtitle: Text(roleTitles.isEmpty
+                                  ? 'No role assigned'
+                                  : roleTitles.join(', ')),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Edit roles',
+                                    icon: const Icon(Icons.badge_outlined),
+                                    onPressed: () => _editCommitteeMemberRoles(
+                                        context, fs, committee, m),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Remove',
+                                    icon:
+                                        const Icon(Icons.person_remove_outlined),
+                                    onPressed: () => fs.removeCommitteeMember(m),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Lists a team's members, with add / remove actions.
+class _TeamMembersDialog extends StatelessWidget {
+  final FirestoreService fs;
+  final Team team;
+  const _TeamMembersDialog({required this.fs, required this.team});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Members — ${team.title}'),
+      content: SizedBox(
+        width: 480,
+        height: 420,
+        child: StreamBuilder<List<TeamMember>>(
+          stream: fs.teamMembers(),
+          builder: (context, snap) {
+            final members = (snap.data ?? const <TeamMember>[])
+                .where((m) => m.teamId == team.id)
+                .toList()
+              ..sort((a, b) => a.userName
+                  .toLowerCase()
+                  .compareTo(b.userName.toLowerCase()));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      final existing = {for (final m in members) m.userId};
+                      final user = await _pickUser(context, fs, existing);
+                      if (user != null) await fs.addTeamMember(team, user);
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add member'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: members.isEmpty
+                      ? const Center(child: Text('No members yet.'))
+                      : ListView.separated(
+                          itemCount: members.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final m = members[i];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.person_outline),
+                              title: Text(m.userName),
+                              trailing: IconButton(
+                                tooltip: 'Remove',
+                                icon: const Icon(Icons.person_remove_outlined),
+                                onPressed: () => fs.removeTeamMember(m),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
       actions: [

@@ -22,7 +22,7 @@ drawer + bottom navigation on phones.
 | **Auth** | Email/Password, one-time email link (passwordless), QR-code sign-in, Google, Facebook, password reset |
 | **Roles** | Guest → Supporter → Member → Contributor → Sponsor → Fundraising (Vendor/Sponsor/Volunteer/Admin) → Policy Admin → Administrator → Web Admin |
 | **Permissions** | Every admin area is gated by a granular permission; Web Admins can also *delegate* individual permissions to any user, optionally with an expiry. All changes are audit-logged |
-| **Committees** | Public "Leadership & Committees" directory (positions & who holds them, OPEN roles); members can belong to one or more committees |
+| **Committees & Teams** | Public "Leadership & Committees" directory where each committee defines its own **roles**, filled by real app users (unfilled roles show as OPEN). Membership lives in dedicated join collections (`committee_members`, `team_members`), so a user can belong to many committees/teams and hold one or more roles in each. **Teams** are a lighter people-grouping managed alongside committees. Both are managed per-group under Admin → Committees / Teams → *Members* |
 | **Gallery** | Contributor-managed image library: thumbnail grid, sorting/sizing, multi-select delete, full-screen viewer with metadata, public/hidden visibility per image |
 | **Responsive** | Looks good on any phone and on a desktop/laptop browser |
 | **Demo mode** | Runs with seeded sample data until Firebase is configured, so you can preview instantly |
@@ -210,7 +210,9 @@ Admin** edits and publishes in-app (Admin → Legal). They are drafts with
     public client id may appear in app code (via `--dart-define=PAYPAL_CLIENT_ID=…`).
 - **PII lives in three places** — treat them carefully:
   - `/users/*` — profiles (email, phone, address). Readable only by signed-in users;
-    writable only by the owner (and role/grants/committees only by Web Admins).
+    writable only by the owner (and role/grants only by Web Admins). Committee/team
+    membership is no longer stored here — it lives in the `committee_members` /
+    `team_members` join collections, managed by committee managers.
   - `/fundraising_orders/*` — customer names, contacts, delivery addresses. Readable
     **only** by fundraising staff; never rendered on public pages.
   - `/donations/*` — donor gives name/amount; readable only by the donor and donation

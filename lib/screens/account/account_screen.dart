@@ -190,9 +190,9 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         const SizedBox(height: 20),
         const SectionHeader(
-          title: 'My Committees',
-          subtitle: 'Committees you\'ve been added to. Ask a Web Admin to '
-              'update your memberships.',
+          title: 'My Committees & Teams',
+          subtitle: 'Committees and teams you\'ve been added to. Ask a Web '
+              'Admin to update your memberships.',
         ),
         _MyCommittees(user: user),
       ],
@@ -667,45 +667,118 @@ class _SecurityTabState extends State<_SecurityTab> {
   }
 }
 
-/// Lists the committees the member belongs to (from their profile), resolved to
-/// names via the live committees list.
+/// Lists the committees and teams the member belongs to, read from the
+/// membership join collections and resolved to names/roles via the live
+/// committees and teams lists.
 class _MyCommittees extends StatelessWidget {
   final AppUser user;
   const _MyCommittees({required this.user});
 
   @override
   Widget build(BuildContext context) {
-    if (user.committees.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('You\'re not on any committees yet.'),
-        ),
-      );
-    }
     final fs = context.read<FirestoreService>();
     return StreamBuilder<List<Committee>>(
       stream: fs.committees(),
-      builder: (context, snap) {
-        final all = snap.data ?? const <Committee>[];
-        final mine =
-            all.where((c) => user.committees.contains(c.id)).toList();
-        final names = mine.isEmpty
-            ? user.committees // fall back to ids until they load
-            : mine.map((c) => c.title).toList();
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final n in names) Pill(n, icon: Icons.groups_2_outlined),
-              ],
-            ),
-          ),
+      builder: (context, cSnap) {
+        final committees = {
+          for (final c in (cSnap.data ?? const <Committee>[])) c.id: c
+        };
+        return StreamBuilder<List<CommitteeMember>>(
+          stream: fs.committeeMembers(),
+          builder: (context, cmSnap) {
+            final myCommittees = (cmSnap.data ?? const <CommitteeMember>[])
+                .where((m) => m.userId == user.uid)
+                .toList();
+            return StreamBuilder<List<Team>>(
+              stream: fs.teams(),
+              builder: (context, tSnap) {
+                final teams = {
+                  for (final t in (tSnap.data ?? const <Team>[])) t.id: t
+                };
+                return StreamBuilder<List<TeamMember>>(
+                  stream: fs.teamMembers(),
+                  builder: (context, tmSnap) {
+                    final myTeams = (tmSnap.data ?? const <TeamMember>[])
+                        .where((m) => m.userId == user.uid)
+                        .toList();
+                    return _card(context, committees, myCommittees, teams,
+                        myTeams);
+                  },
+                );
+              },
+            );
+          },
         );
       },
     );
+  }
+
+  Widget _card(
+    BuildContext context,
+    Map<String, Committee> committees,
+    List<CommitteeMember> myCommittees,
+    Map<String, Team> teams,
+    List<TeamMember> myTeams,
+  ) {
+    if (myCommittees.isEmpty && myTeams.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text('You\'re not on any committees or teams yet.'),
+        ),
+      );
+    }
+    final textTheme = Theme.of(context).textTheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (myCommittees.isNotEmpty) ...[
+              Text('Committees', style: textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final m in myCommittees)
+                    Pill(
+                      _committeeLabel(committees[m.committeeId], m),
+                      icon: Icons.groups_2_outlined,
+                    ),
+                ],
+              ),
+            ],
+            if (myCommittees.isNotEmpty && myTeams.isNotEmpty)
+              const SizedBox(height: 16),
+            if (myTeams.isNotEmpty) ...[
+              Text('Teams', style: textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final m in myTeams)
+                    Pill(teams[m.teamId]?.title ?? 'Team',
+                        icon: Icons.diversity_3),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "Concessions · Chair, Volunteer Coordinator" — committee name plus the
+  /// member's role titles (falls back to the id while the committee loads).
+  String _committeeLabel(Committee? committee, CommitteeMember m) {
+    final name = committee?.title ?? m.committeeId;
+    if (committee == null || m.roleIds.isEmpty) return name;
+    final roles = [
+      for (final id in m.roleIds) committee.roleById(id)?.title,
+    ].whereType<String>().toList();
+    return roles.isEmpty ? name : '$name · ${roles.join(', ')}';
   }
 }
