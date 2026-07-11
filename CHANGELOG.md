@@ -3,6 +3,30 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.17.1
+- **Documentation & security review pass** (no feature changes).
+  - **README rewritten** to cover everything the app now does: full feature and
+    role/permission tables, an architecture walkthrough with a "how data flows"
+    primer for new developers, verified install/deploy instructions (including
+    the `--pwa-strategy=none` / `--no-tree-shake-icons` build flags and the
+    Storage CORS step), a "secrets & PII" section, and versioning notes.
+  - **Junior-developer code comments**: a "start here" boot-sequence guide in
+    `main.dart`, a step-by-step "adding a new content type" recipe on
+    `FirestoreService`, the editor-dialog contract in `content_forms.dart`, a
+    security note in `firebase_options.dart` explaining that the Firebase web
+    apiKey is a public identifier (not a secret), and an up-to-date folder map
+    in `storage.rules`.
+  - **Secrets audit**: confirmed no private keys/secrets in the repo — the CI
+    deploy key lives in a GitHub Actions secret and PayPal credentials in Cloud
+    Functions secrets; demo data uses fictional 555 phone numbers and
+    example.com emails.
+  - **Privacy Policy starter updated** for features added since it was written:
+    fundraising order information (name/contact/delivery address, staff-only),
+    public committee & leadership rosters, gallery visibility, and the US
+    Census geocoding lookup for event addresses. Terms of Use sign-in list
+    completed (password, email link, QR, Google/Facebook). *If you already
+    published these documents, review and re-publish them from Admin → Legal.*
+
 ## 1.17.0
 - **Committee positions, leadership groups & member memberships.**
   - Each committee (or new **leadership group**) can now list **positions** —

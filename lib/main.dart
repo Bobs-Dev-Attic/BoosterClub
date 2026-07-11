@@ -1,3 +1,20 @@
+// App entry point — START HERE when learning the codebase.
+//
+// Boot sequence:
+//   1. main() tries to initialize Firebase. If the credentials in
+//      lib/firebase_options.dart are still placeholders (or init fails/times
+//      out), the app flips into DEMO MODE: every service swaps to an
+//      in-memory data store so the whole app still works with no backend.
+//   2. BoosterClubApp wires up the app-wide services with `provider`:
+//        - FirestoreService  → all database reads/writes (screens never talk
+//                              to Firebase directly; they go through this).
+//        - AuthProvider      → who is signed in + their profile/role.
+//        - ThemeProvider     → light/dark/system theme choice.
+//      Any widget can reach these with context.read<T>() / context.watch<T>().
+//   3. MaterialApp.router hands navigation to go_router — every URL/page is
+//      declared in lib/router/app_router.dart.
+//
+// See README.md ("Architecture" and "How data flows") for the bigger picture.
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
