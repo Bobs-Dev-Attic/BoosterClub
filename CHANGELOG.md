@@ -3,6 +3,14 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.7
+- **CI: fixed a flaky security-rules test.** The "only manage_users may change
+  another user role" emulator test used `updateDoc`, which additionally requires
+  the just-seeded target document to already be visible; under the emulator that
+  read could intermittently `NOT_FOUND` and fail the deploy-gating job. Switched
+  it to `setDoc(merge)` so it tests the write *rule* only. (Ships the 1.18.6
+  committee/teams changes, whose deploy was blocked by this flake.)
+
 ## 1.18.6
 - **Committee membership moved to a join table; committee Roles; new Teams.**
   Reworked how people relate to committees, and added Teams:
