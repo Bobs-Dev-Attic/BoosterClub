@@ -40,11 +40,31 @@ async function seedUser(uid, role) {
 const stg = (uid) =>
   (uid ? env.authenticatedContext(uid) : env.unauthenticatedContext()).storage();
 
+/// The gallery upload rule does a cross-service firestore.get() to read the
+/// uploader's role. Immediately after seeding that user's doc, the Storage
+/// emulator's lookup into the Firestore emulator can briefly miss it and return
+/// `storage/unauthorized`. Retry the *success* case a few times so a genuine
+/// deny still fails (all attempts throw) while this timing race doesn't.
+async function assertSucceedsEventually(makeOp, tries = 6, delayMs = 200) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await assertSucceeds(makeOp());
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 test('gallery upload: managers only (member denied, contributor allowed)', async () => {
   await seedUser('mem', 'member');
   await assertFails(uploadBytes(ref(stg('mem'), 'gallery/a.jpg'), IMG, META));
   await seedUser('con', 'contributor');
-  await assertSucceeds(uploadBytes(ref(stg('con'), 'gallery/b.jpg'), IMG, META));
+  await assertSucceedsEventually(
+    () => uploadBytes(ref(stg('con'), 'gallery/b.jpg'), IMG, META),
+  );
 });
 
 test('gallery upload: rejects non-image and oversized', async () => {

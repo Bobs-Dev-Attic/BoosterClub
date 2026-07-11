@@ -3,7 +3,7 @@
   "private": true,
   "description": "Firestore & Storage security-rules tests (run against the emulator).",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore,storage --project demo-booster \"node --test\""
+    "test": "firebase emulators:exec --only firestore,storage --project demo-booster \"node --test --test-concurrency=1\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",

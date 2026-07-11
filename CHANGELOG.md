@@ -4,12 +4,18 @@ Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
 ## 1.18.7
-- **CI: fixed a flaky security-rules test.** The "only manage_users may change
-  another user role" emulator test used `updateDoc`, which additionally requires
-  the just-seeded target document to already be visible; under the emulator that
-  read could intermittently `NOT_FOUND` and fail the deploy-gating job. Switched
-  it to `setDoc(merge)` so it tests the write *rule* only. (Ships the 1.18.6
-  committee/teams changes, whose deploy was blocked by this flake.)
+- **CI: fixed flaky security-rules tests blocking deploy.** Root cause: `node
+  --test` ran the Firestore and Storage rules-test files **concurrently**, and
+  both share one emulator + project and call `clearFirestore()` in `beforeEach`
+  — so one file's reset intermittently wiped the other's freshly-seeded user
+  docs mid-test, surfacing as random `NOT_FOUND` / `storage/unauthorized`
+  failures in whichever role/owner-gated assertion happened to overlap. Fixed by
+  running the test files sequentially (`--test-concurrency=1`). Also hardened two
+  assertions defensively: the user-role test uses `setDoc(merge)` instead of
+  `updateDoc` (no pre-existence requirement), and the cross-service gallery
+  upload retries briefly on the role lookup. Verified with 5 consecutive clean
+  emulator runs. (Ships the 1.18.6 committee/teams changes, whose deploy this
+  flake had blocked.)
 
 ## 1.18.6
 - **Committee membership moved to a join table; committee Roles; new Teams.**
