@@ -1,13 +1,25 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_config.dart';
 import '../models/app_user.dart';
+
+/// A pending QR pairing session: its public [id] (encoded in the QR) plus the
+/// private [secret] the creating device keeps to itself. The secret is what
+/// lets this device — and only this device — later claim the sign-in token.
+class QrSession {
+  final String id;
+  final String secret;
+  const QrSession(this.id, this.secret);
+}
 
 /// Result of an attempted sign-in.
 class AuthResult {
@@ -194,52 +206,80 @@ class AuthService {
 
   // ---- QR sign-in -------------------------------------------------------
   //
-  // Cross-device flow:
-  //   1. The web app creates a `qr_sessions/{id}` doc (status: pending) and
-  //      shows a QR encoding a /pair?s={id} URL.
+  // Cross-device flow (see functions/index.js for the matching server logic):
+  //   1. The web app creates a `qr_sessions/{id}` doc (status: pending) that
+  //      stores only the SHA-256 HASH of a locally-generated secret. It shows a
+  //      QR encoding a /pair?s={id} URL. The secret is NEVER in the QR or the
+  //      document — it stays in this device's memory.
   //   2. A phone that is already signed in opens that URL and approves it,
-  //      which calls the `approveQrSignIn` Cloud Function. The function (Admin
-  //      SDK) mints a Firebase custom token for the phone's user and writes it
-  //      back onto the session doc.
-  //   3. The web app, watching the doc, exchanges the token via
-  //      signInWithCustomToken and deletes the session.
+  //      calling `approveQrSignIn`. That records the approving uid only; no
+  //      token is minted or stored (a stored token could be read by anyone,
+  //      since the session doc is publicly readable).
+  //   3. The web app, watching the doc, sees `status == approved` and calls
+  //      `claimQrSignIn` with the secret. The function verifies the secret,
+  //      mints the token, returns it directly (never persisting it), and
+  //      deletes the single-use session. The web app signs in with the token.
 
   CollectionReference<Map<String, dynamic>> get _qrSessions =>
       _db.collection('qr_sessions');
 
-  /// Creates a pending QR pairing session and returns its id.
-  Future<String> createQrSession() async {
+  /// Generates a high-entropy URL-safe secret (32 random bytes).
+  String _randomSecret() {
+    final rnd = Random.secure();
+    final bytes = List<int>.generate(32, (_) => rnd.nextInt(256));
+    return base64UrlEncode(bytes);
+  }
+
+  /// Creates a pending QR pairing session. Stores only the secret's hash; the
+  /// returned [QrSession] carries the raw secret for this device to keep.
+  Future<QrSession> createQrSession() async {
+    final secret = _randomSecret();
+    final hash = sha256.convert(utf8.encode(secret)).toString();
     final doc = _qrSessions.doc();
     await doc.set({
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
+      'secretHash': hash,
     });
-    return doc.id;
+    return QrSession(doc.id, secret);
   }
 
   /// Streams the status of a QR session so the web app can react to approval.
   Stream<Map<String, dynamic>?> watchQrSession(String sessionId) =>
       _qrSessions.doc(sessionId).snapshots().map((s) => s.data());
 
-  /// Web side: once the session carries a custom token, sign in with it and
-  /// clean up the session document.
-  Future<AuthResult> signInWithQrToken(String token, {String? sessionId}) async {
+  /// Web side: once a phone has approved the session, prove knowledge of the
+  /// [secret] to obtain and consume the custom token, then sign in.
+  Future<AuthResult> claimQrSignIn(String sessionId, String secret) async {
     if (AppConfig.demoMode) {
       return _demoSignIn('qr.user@example.com', name: 'QR User');
     }
     try {
-      await _auth.signInWithCustomToken(token);
-      if (sessionId != null) {
-        await _qrSessions.doc(sessionId).delete().catchError((_) {});
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('claimQrSignIn');
+      final res = await callable
+          .call<dynamic>({'sessionId': sessionId, 'secret': secret});
+      final token = (res.data as Map?)?['token'] as String?;
+      if (token == null || token.isEmpty) {
+        return const AuthResult(false, 'No sign-in token was returned.');
       }
+      await _auth.signInWithCustomToken(token);
       return const AuthResult(true);
+    } on FirebaseFunctionsException catch (e) {
+      return AuthResult(false, e.message ?? 'Sign-in failed.');
     } on FirebaseAuthException catch (e) {
       return AuthResult(false, e.message);
+    } catch (e) {
+      return AuthResult(false, '$e');
     }
   }
 
+  /// Demo-mode QR sign-in (no backend) used by the "Simulate scan" button.
+  Future<AuthResult> demoQrSignIn() async =>
+      _demoSignIn('qr.user@example.com', name: 'QR User');
+
   /// Phone side: approve a scanned QR session. Calls the Cloud Function which
-  /// mints a custom token for the current (already signed-in) user.
+  /// records the approval for the current (already signed-in) user.
   Future<AuthResult> approveQrSession(String sessionId) async {
     if (AppConfig.demoMode) return const AuthResult(true);
     if (_auth.currentUser == null) {
