@@ -35,6 +35,35 @@ jobs:
         # being served from the SW's Cache Storage until a second reload.
         run: flutter build web --release --no-tree-shake-icons --pwa-strategy=none
 
+  # Security tests: Cloud Functions unit tests + Firestore/Storage security-rules
+  # tests run against the Firebase emulators. Guards the authorization model so a
+  # rules change can't silently open up PII or privilege escalation.
+  security-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cloud Functions unit tests
+        working-directory: functions
+        run: node --test
+
+      - name: Install rules-test dependencies
+        working-directory: firestore-tests
+        run: npm ci
+
+      - name: Firestore & Storage rules tests (emulator)
+        working-directory: firestore-tests
+        run: npm test
+
   deploy:
     # Auto-deploys Hosting AND Firestore/Storage security rules to Firebase on
     # every push to main — no local commands.
@@ -46,7 +75,7 @@ jobs:
     #
     # NOTE: Cloud Functions are NOT deployed here (that needs the Blaze plan and
     # extra roles); deploy them manually with `firebase deploy --only functions`.
-    needs: build
+    needs: [build, security-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
