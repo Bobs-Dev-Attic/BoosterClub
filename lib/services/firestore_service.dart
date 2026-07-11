@@ -133,9 +133,47 @@ class FirestoreService {
   Stream<List<HistoryFact>> historyFacts() =>
       _stream('history_facts', HistoryFact.fromDoc, orderBy: 'month');
 
+  /// All gallery images (public + hidden). Only gallery managers may read this
+  /// unfiltered — the security rules deny an unconstrained read to others.
   Stream<List<GalleryImage>> gallery() => _stream(
       'gallery', GalleryImage.fromDoc,
       orderBy: 'uploadedAt', descending: true);
+
+  /// Public-only gallery images, for the public Gallery page. Filters on the
+  /// server (`public == true`) so hidden images are never sent to guests, and
+  /// so the query is permitted by the gallery read rule. Sorted client-side to
+  /// avoid needing a composite index.
+  Stream<List<GalleryImage>> galleryPublic() {
+    if (AppConfig.demoMode) {
+      return gallery().map(
+          (list) => list.where((g) => g.public).toList());
+    }
+    return _db
+        .collection('gallery')
+        .where('public', isEqualTo: true)
+        .snapshots()
+        .map((snap) {
+      final list =
+          snap.docs.map((d) => GalleryImage.fromDoc(d.id, d.data())).toList();
+      list.sort((a, b) => (b.uploadedAt ?? DateTime(1970))
+          .compareTo(a.uploadedAt ?? DateTime(1970)));
+      return list;
+    });
+  }
+
+  /// One-time backfill: older gallery documents created before the `public`
+  /// flag existed have no such field, so `where('public', == true)` would hide
+  /// them from the public page. Set the flag to true (their prior behavior) on
+  /// any that are missing it. Safe to call repeatedly; only managers can run it.
+  Future<void> ensureGalleryPublicFlags() async {
+    if (AppConfig.demoMode) return;
+    final snap = await _db.collection('gallery').get();
+    for (final doc in snap.docs) {
+      if (doc.data()['public'] == null) {
+        await doc.reference.set({'public': true}, SetOptions(merge: true));
+      }
+    }
+  }
 
   /// Legal/policy documents (Terms of Use, Privacy Policy). Small, unordered
   /// set keyed by a stable id (`terms`, `privacy`).
