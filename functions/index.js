@@ -271,8 +271,44 @@ exports.paypalWebhook = onRequest(
   }
 );
 
+// ---- QR sign-in ----------------------------------------------------------
+//
+// SECURITY DESIGN (why it's split into two functions):
+//
+// The custom token that signs a user in is a bearer credential — anyone who
+// holds it can sign in as that user. The `qr_sessions` document is PUBLICLY
+// READABLE (the waiting web browser is not yet signed in, so it can only poll
+// an unauthenticated read). Therefore the token must NEVER be written into that
+// document, or any observer of the session id could steal the sign-in.
+//
+// Instead:
+//   1. The web browser generates a high-entropy `secret` locally and stores
+//      only its SHA-256 hash on the session doc. The secret is never placed in
+//      the QR code or the document — it stays in the browser's memory.
+//   2. `approveQrSignIn` (phone, authenticated) only records that the session
+//      was approved and by which uid. No token is minted or stored here.
+//   3. `claimQrSignIn` (web) proves knowledge of the secret. Only then do we
+//      mint the token and RETURN it in the callable response (over HTTPS, never
+//      persisted), then delete the single-use session.
+//
+// Net effect: reading the public session doc reveals nothing usable, and the
+// token only ever reaches the browser that created the session.
+
+const crypto = require('crypto');
 const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+function sha256Hex(value) {
+  return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
+function sessionAgeMs(data) {
+  const createdAt =
+    data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
+  return createdAt ? Date.now() - createdAt : 0;
+}
+
+// Phone side: the already-signed-in user approves a scanned session. Records
+// the approval and the approving uid only — no token is created or stored.
 exports.approveQrSignIn = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid) {
@@ -294,24 +330,62 @@ exports.approveQrSignIn = onCall(async (request) => {
   if (data.status !== 'pending') {
     throw new HttpsError('failed-precondition', 'This request was already used.');
   }
-
-  const createdAt = data.createdAt && data.createdAt.toMillis
-    ? data.createdAt.toMillis()
-    : 0;
-  if (createdAt && Date.now() - createdAt > SESSION_TTL_MS) {
+  if (sessionAgeMs(data) > SESSION_TTL_MS) {
     await ref.delete();
     throw new HttpsError('deadline-exceeded', 'This sign-in request expired.');
   }
 
-  // Mint a short-lived custom token for the approving user.
-  const token = await admin.auth().createCustomToken(uid);
-
   await ref.update({
     status: 'approved',
-    token,
     uid,
     approvedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   return { ok: true };
+});
+
+// Web side: exchange the session (once a phone has approved it) for a custom
+// token, proving knowledge of the secret generated when the session was
+// created. The token is returned here and NEVER written to Firestore. The
+// session is single-use and deleted on success.
+exports.claimQrSignIn = onCall(async (request) => {
+  const sessionId = request.data && request.data.sessionId;
+  const secret = request.data && request.data.secret;
+  if (!sessionId || typeof sessionId !== 'string') {
+    throw new HttpsError('invalid-argument', 'A sessionId is required.');
+  }
+  if (!secret || typeof secret !== 'string') {
+    throw new HttpsError('invalid-argument', 'A secret is required.');
+  }
+
+  const ref = admin.firestore().collection('qr_sessions').doc(sessionId);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    throw new HttpsError('not-found', 'This sign-in request no longer exists.');
+  }
+  const data = snap.data();
+
+  // Constant-time-ish comparison of the secret hash before doing anything else.
+  const expected = data.secretHash || '';
+  const provided = sha256Hex(secret);
+  const ok =
+    expected.length === provided.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(provided));
+  if (!ok) {
+    throw new HttpsError('permission-denied', 'Invalid session secret.');
+  }
+
+  if (sessionAgeMs(data) > SESSION_TTL_MS) {
+    await ref.delete();
+    throw new HttpsError('deadline-exceeded', 'This sign-in request expired.');
+  }
+  if (data.status !== 'approved' || !data.uid) {
+    throw new HttpsError('failed-precondition', 'Not approved yet.');
+  }
+
+  const token = await admin.auth().createCustomToken(data.uid);
+  // Single-use: remove the session so the token can never be re-claimed.
+  await ref.delete();
+
+  return { token };
 });

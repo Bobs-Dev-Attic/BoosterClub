@@ -226,14 +226,25 @@ console. The app sends a link, remembers the email on the device, and completes 
 when the user returns (via `/finishSignIn`); if opened on another device it asks the user
 to confirm their email.
 
-## 🔑 QR-code sign-in (Cloud Function)
+## 🔑 QR-code sign-in (Cloud Functions)
 
-Cross-device flow: the web app creates a `qr_sessions/{id}` doc and shows a QR encoding a
-`/pair?s=<id>` link. A phone that is already signed in opens it and approves, which calls
-the **`approveQrSignIn`** Cloud Function (`functions/index.js`). The function mints a
-Firebase custom token for the phone's user and writes it onto the session; the web app
-exchanges it via `signInWithCustomToken`. In demo mode a "Simulate scan" button completes
-the flow instantly.
+Cross-device flow, designed so the sign-in token is **never stored in a publicly
+readable document**:
+
+1. The web app generates a high-entropy secret, stores only its **SHA-256 hash** on a
+   new `qr_sessions/{id}` doc, and shows a QR encoding a `/pair?s=<id>` link. The secret
+   stays in the browser — it is never in the QR or the document.
+2. A phone that is already signed in opens the link and approves, calling
+   **`approveQrSignIn`** (`functions/index.js`), which records only the approving uid.
+3. The web app sees `status == approved` and calls **`claimQrSignIn`** with its secret.
+   The function verifies the secret, mints a Firebase custom token, **returns it directly**
+   (never persisting it), and deletes the single-use session. The web app signs in via
+   `signInWithCustomToken`.
+
+Because the token is never written to Firestore and `qr_sessions` writes are locked down
+(create-only, no client update/delete), an observer of the public session doc cannot
+steal a sign-in or delete other people's sessions. In demo mode a "Simulate scan" button
+completes the flow instantly.
 
 Deploy the function (requires the **Blaze** plan):
 

@@ -3,6 +3,22 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.0
+- **Security: hardened QR-code sign-in** (repo review item #1). Previously the
+  Cloud Function minted a Firebase custom token and wrote it onto the
+  `qr_sessions` document, which is publicly readable — anyone who learned a
+  session id during the ~5-minute window could read the token and sign in as the
+  approving user, or delete sessions to disrupt sign-in. Redesigned so the token
+  is never stored in Firestore:
+  - The web browser generates a high-entropy secret and stores only its SHA-256
+    hash on the session; the secret is never in the QR code or the document.
+  - `approveQrSignIn` (phone) now records only the approving uid.
+  - A new `claimQrSignIn` function verifies the secret, mints the token, returns
+    it directly (never persisted), and deletes the single-use session.
+  - `qr_sessions` rules now allow only a locked-down create (with a `secretHash`)
+    and public status polling — client update and delete are denied.
+  - (Requires re-deploying Cloud Functions: `firebase deploy --only functions`.)
+
 ## 1.17.1
 - **Documentation & security review pass** (no feature changes).
   - **README rewritten** to cover everything the app now does: full feature and

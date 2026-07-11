@@ -42,14 +42,14 @@ class _QrLoginScreenState extends State<QrLoginScreen> {
       return;
     }
     try {
-      final id = await auth.createQrSession();
+      final session = await auth.createQrSession();
       if (!mounted) return;
-      setState(() => _sessionId = id);
-      _sub = auth.watchQrSession(id).listen((data) async {
-        final token = data?['token'] as String?;
-        if (token != null && !_signingIn) {
+      setState(() => _sessionId = session.id);
+      _sub = auth.watchQrSession(session.id).listen((data) async {
+        // Once a phone approves, exchange our private secret for the token.
+        if (data?['status'] == 'approved' && !_signingIn) {
           setState(() => _signingIn = true);
-          final res = await auth.signInWithQrToken(token, sessionId: id);
+          final res = await auth.claimQrSignIn(session.id, session.secret);
           if (!mounted) return;
           if (res.success) {
             context.go('/');
@@ -153,7 +153,7 @@ class _QrLoginScreenState extends State<QrLoginScreen> {
                           ? null
                           : () async {
                               setState(() => _signingIn = true);
-                              await auth.signInWithQrToken('demo');
+                              await auth.demoQrSignIn();
                               if (context.mounted) context.go('/');
                             },
                       icon: const Icon(Icons.check),

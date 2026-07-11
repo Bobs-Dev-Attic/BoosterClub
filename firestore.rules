@@ -141,12 +141,23 @@ service cloud.firestore {
     }
 
     // ---- QR sign-in pairing sessions ----------------------------------
+    // The waiting browser isn't signed in yet, so it must be able to CREATE a
+    // session and POLL (get) its status without auth. But it may only ever
+    // write three fields, and never a token: the sign-in token is minted by the
+    // claimQrSignIn Cloud Function and returned directly to the caller, never
+    // stored here (see functions/index.js). `secretHash` is the SHA-256 of a
+    // secret the browser keeps privately; without the secret a reader of this
+    // doc can do nothing. Approve/claim run through the Admin SDK (which
+    // bypasses these rules), so client update/delete are denied — this also
+    // stops anyone from deleting other people's sessions.
     match /qr_sessions/{id} {
-      allow create: if request.resource.data.keys().hasOnly(['status', 'createdAt'])
-        && request.resource.data.status == 'pending';
+      allow create: if request.resource.data.keys()
+          .hasOnly(['status', 'createdAt', 'secretHash'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.secretHash is string
+        && request.resource.data.secretHash.size() >= 16;
       allow get: if true;
-      allow delete: if true;
-      allow update: if false;
+      allow update, delete: if false;
     }
 
     // ---- Volunteer sign-ups (per user) --------------------------------
