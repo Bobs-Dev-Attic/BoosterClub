@@ -17,10 +17,38 @@ import 'fundraising_admin.dart';
 import 'gallery_admin.dart';
 import 'users_admin.dart';
 
+/// The top-level groupings shown on the Admin Dashboard. Each category collects
+/// a set of related management sections and is rendered as a flyout menu, so the
+/// dozen-plus sections are organised by topic instead of one long tab strip.
+enum _AdminCategory {
+  content('Content & Engagement', Icons.dashboard_customize),
+  fundraising('Fundraising & Finance', Icons.savings),
+  organization('Organization', Icons.account_balance);
+
+  const _AdminCategory(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
 /// Admin dashboard. Visible to Administrators and Web Admins. Lets managers
 /// create, edit and delete content across every collection.
-class AdminScreen extends StatelessWidget {
+///
+/// Sections are grouped into a small row of [_AdminCategory] flyout menus rather
+/// than a single long row of tabs. Tapping a category opens a menu of the
+/// related sections; the chosen one is shown below. It's a [StatefulWidget]
+/// because it has to remember which section is currently open.
+class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
+
+  @override
+  State<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends State<AdminScreen> {
+  // The label of the currently open section. Null until the user picks one, in
+  // which case we fall back to the first section they're allowed to see. We key
+  // off the label (not the object) so it survives the list being rebuilt.
+  String? _selectedLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -46,44 +74,61 @@ class AdminScreen extends StatelessWidget {
       );
     }
 
-    // Only show the tabs the user is permitted to manage.
+    // Only build the sections the user is permitted to manage. Each carries the
+    // category it belongs to; they're declared grouped by category so the menus
+    // and their items keep this order.
     bool can(String p) => user.can(p);
     final tabs = <_AdminTab>[
+      // Content & Engagement — the public-facing pages members browse.
       if (can('manage_events'))
-        _AdminTab('Events', Icons.event, (fs) => _EventsAdmin(fs)),
+        _AdminTab('Events', Icons.event, _AdminCategory.content,
+            (fs) => _EventsAdmin(fs)),
       if (can('manage_volunteering'))
         _AdminTab('Volunteering', Icons.volunteer_activism,
-            (fs) => _VolunteerAdmin(fs)),
+            _AdminCategory.content, (fs) => _VolunteerAdmin(fs)),
+      if (can('manage_faqs'))
+        _AdminTab('FAQ', Icons.help, _AdminCategory.content,
+            (fs) => _FaqAdmin(fs)),
+      if (can('manage_gallery'))
+        _AdminTab('Gallery', Icons.photo_library, _AdminCategory.content,
+            (fs) => GalleryAdmin(fs: fs)),
+      if (can('manage_history'))
+        _AdminTab('History', Icons.auto_stories, _AdminCategory.content,
+            (fs) => _HistoryAdmin(fs)),
+      // Fundraising & Finance — everything that brings in or tracks money.
       if (can('manage_sponsorships'))
-        _AdminTab('Sponsors', Icons.handshake, (fs) => _SponsorAdmin(fs)),
+        _AdminTab('Sponsors', Icons.handshake, _AdminCategory.fundraising,
+            (fs) => _SponsorAdmin(fs)),
       if (can('manage_funding'))
-        _AdminTab('Funding', Icons.request_quote, (fs) => _FundingAdmin(fs)),
+        _AdminTab('Funding', Icons.request_quote, _AdminCategory.fundraising,
+            (fs) => _FundingAdmin(fs)),
       if (can('manage_fundraisers'))
-        _AdminTab('Fundraisers', Icons.savings, (fs) => _FundraiserAdmin(fs)),
+        _AdminTab('Fundraisers', Icons.savings, _AdminCategory.fundraising,
+            (fs) => _FundraiserAdmin(fs)),
       if (can('manage_fundraising') ||
           can('fulfill_fundraising') ||
           can('supply_fundraising') ||
           can('sponsor_fundraising'))
-        _AdminTab('Fundraising', Icons.campaign,
+        _AdminTab('Fundraising', Icons.campaign, _AdminCategory.fundraising,
             (fs) => FundraisingAdmin(fs: fs, user: user)),
-      if (can('manage_meetings'))
-        _AdminTab('Meetings', Icons.groups, (fs) => _MeetingAdmin(fs)),
-      if (can('manage_faqs'))
-        _AdminTab('FAQ', Icons.help, (fs) => _FaqAdmin(fs)),
-      if (can('manage_committees'))
-        _AdminTab('Committees', Icons.groups_2, (fs) => _CommitteeAdmin(fs)),
-      if (can('manage_history'))
-        _AdminTab('History', Icons.auto_stories, (fs) => _HistoryAdmin(fs)),
-      if (can('manage_gallery'))
-        _AdminTab('Gallery', Icons.photo_library, (fs) => GalleryAdmin(fs: fs)),
-      if (can('manage_legal'))
-        _AdminTab('Legal', Icons.gavel, (fs) => _LegalAdmin(fs)),
       if (can('manage_donations'))
-        _AdminTab('Donations', Icons.favorite, (fs) => DonationsAdmin(fs: fs)),
+        _AdminTab('Donations', Icons.favorite, _AdminCategory.fundraising,
+            (fs) => DonationsAdmin(fs: fs)),
+      // Organization — governance, people and legal.
+      if (can('manage_meetings'))
+        _AdminTab('Meetings', Icons.groups, _AdminCategory.organization,
+            (fs) => _MeetingAdmin(fs)),
+      if (can('manage_committees'))
+        _AdminTab('Committees', Icons.groups_2, _AdminCategory.organization,
+            (fs) => _CommitteeAdmin(fs)),
+      if (can('manage_legal'))
+        _AdminTab('Legal', Icons.gavel, _AdminCategory.organization,
+            (fs) => _LegalAdmin(fs)),
       if (can('manage_users')) ...[
         _AdminTab('Users & Roles', Icons.manage_accounts,
-            (fs) => UsersAdmin(fs: fs, actor: user)),
-        _AdminTab('Audit Log', Icons.history, (fs) => AuditLogView(fs: fs)),
+            _AdminCategory.organization, (fs) => UsersAdmin(fs: fs, actor: user)),
+        _AdminTab('Audit Log', Icons.history, _AdminCategory.organization,
+            (fs) => AuditLogView(fs: fs)),
       ],
     ];
 
@@ -99,50 +144,92 @@ class AdminScreen extends StatelessWidget {
         ),
       );
     }
-    return DefaultTabController(
-      length: tabs.length,
-      child: Column(
-        children: [
-          Material(
-            color: Theme.of(context).colorScheme.surface,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.admin_panel_settings,
-                          color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 10),
-                      Text('Admin Dashboard',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const Spacer(),
-                      if (user.can('seed_content')) ...[
-                        _SeedButton(fs: fs),
-                        const SizedBox(width: 12),
-                      ],
-                      Pill(user.role.label, icon: Icons.badge_outlined),
+
+    // Bucket the permitted sections by category (preserving declaration order).
+    final byCategory = <_AdminCategory, List<_AdminTab>>{};
+    for (final t in tabs) {
+      byCategory.putIfAbsent(t.category, () => []).add(t);
+    }
+
+    // Resolve the open section, defaulting to the first one available.
+    final selected = tabs.firstWhere(
+      (t) => t.label == _selectedLabel,
+      orElse: () => tabs.first,
+    );
+
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Material(
+          color: theme.colorScheme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.admin_panel_settings,
+                        color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Text('Admin Dashboard', style: theme.textTheme.titleLarge),
+                    const Spacer(),
+                    if (user.can('seed_content')) ...[
+                      _SeedButton(fs: fs),
+                      const SizedBox(width: 12),
                     ],
-                  ),
-                ),
-                TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [
-                    for (final t in tabs)
-                      Tab(icon: Icon(t.icon, size: 20), text: t.label),
+                    Pill(user.role.label, icon: Icons.badge_outlined),
                   ],
                 ),
-              ],
-            ),
+              ),
+              // Row of category flyout menus. Wraps to new lines on narrow
+              // screens rather than scrolling off the edge.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final category in _AdminCategory.values)
+                      if (byCategory[category] != null)
+                        _CategoryMenu(
+                          category: category,
+                          tabs: byCategory[category]!,
+                          selectedLabel: selected.label,
+                          onSelected: (t) =>
+                              setState(() => _selectedLabel = t.label),
+                        ),
+                  ],
+                ),
+              ),
+              // Breadcrumb showing which section is open now that the flyouts
+              // collapse after a choice is made.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                child: Row(
+                  children: [
+                    Icon(selected.icon,
+                        size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(selected.label,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+            ],
           ),
-          Expanded(
-            child: TabBarView(
-              children: [for (final t in tabs) t.build(fs)],
-            ),
+        ),
+        Expanded(
+          // Key by label so switching sections tears down the old panel and
+          // builds the new one fresh instead of trying to reuse its state.
+          child: KeyedSubtree(
+            key: ValueKey(selected.label),
+            child: selected.build(fs),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -150,8 +237,69 @@ class AdminScreen extends StatelessWidget {
 class _AdminTab {
   final String label;
   final IconData icon;
+  final _AdminCategory category;
   final Widget Function(FirestoreService) build;
-  _AdminTab(this.label, this.icon, this.build);
+  _AdminTab(this.label, this.icon, this.category, this.build);
+}
+
+/// A single category button that opens a flyout ([MenuAnchor]) listing the
+/// sections in that category. The button is highlighted while the open section
+/// belongs to it, and the current section is ticked in the menu.
+class _CategoryMenu extends StatelessWidget {
+  final _AdminCategory category;
+  final List<_AdminTab> tabs;
+  final String selectedLabel;
+  final ValueChanged<_AdminTab> onSelected;
+  const _CategoryMenu({
+    required this.category,
+    required this.tabs,
+    required this.selectedLabel,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // True when the open section lives in this category — used to highlight it.
+    final active = tabs.any((t) => t.label == selectedLabel);
+    return MenuAnchor(
+      menuChildren: [
+        for (final t in tabs)
+          MenuItemButton(
+            leadingIcon: Icon(t.icon,
+                size: 20, color: t.label == selectedLabel ? scheme.primary : null),
+            trailingIcon: t.label == selectedLabel
+                ? Icon(Icons.check, size: 18, color: scheme.primary)
+                : null,
+            onPressed: () => onSelected(t),
+            child: Text(
+              t.label,
+              style: t.label == selectedLabel
+                  ? TextStyle(
+                      color: scheme.primary, fontWeight: FontWeight.w600)
+                  : null,
+            ),
+          ),
+      ],
+      builder: (context, controller, child) {
+        void toggle() =>
+            controller.isOpen ? controller.close() : controller.open();
+        final icon = Icon(category.icon, size: 18);
+        final label = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(category.label),
+            const Icon(Icons.arrow_drop_down, size: 20),
+          ],
+        );
+        return active
+            ? FilledButton.tonalIcon(
+                onPressed: toggle, icon: icon, label: label)
+            : OutlinedButton.icon(
+                onPressed: toggle, icon: icon, label: label);
+      },
+    );
+  }
 }
 
 /// Populates every collection with the bundled sample content — handy for a
