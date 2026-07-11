@@ -1,3 +1,14 @@
+// Admin edit dialogs — one `editXxx(context, existing)` function per content
+// type. Each follows the same contract:
+//
+//   * Called with `null` it acts as "create new"; called with an existing
+//     model it pre-fills the fields for editing.
+//   * It returns a Future that completes with the edited model when the user
+//     saves, or `null` when they cancel. The CALLER is responsible for
+//     persisting the result (usually `fs.upsert(collection, result)`), which
+//     keeps these dialogs free of database code and easy to test.
+//   * A brand-new item uses the sentinel id `'new'`; FirestoreService.upsert
+//     sees that and lets Firestore generate a real document id.
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 

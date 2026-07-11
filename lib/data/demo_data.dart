@@ -631,7 +631,7 @@ By creating an account or using the WJ Booster Club application and website (the
 You must be at least 13 years old to create an account. If you are under 18, you may use the Service only with the involvement and consent of a parent or legal guardian. By using the Service you represent that you meet these requirements and that the information you provide is accurate.
 
 ## 2. Accounts and Security
-- Sign-in is provided through email sign-in links and third-party sign-in (e.g., Google). You are responsible for maintaining the confidentiality of access to your email and account.
+- Sign-in is provided through email/password, one-time email sign-in links, QR-code pairing from an already-signed-in device, and third-party sign-in (e.g., Google or Facebook). You are responsible for maintaining the confidentiality of access to your email and account.
 - You are responsible for all activity that occurs under your account. Notify us promptly at [CONTACT EMAIL] of any unauthorized use.
 - We may suspend or terminate accounts that violate these Terms.
 
@@ -693,6 +693,8 @@ This Privacy Policy explains how [LEGAL ENTITY NAME] ("we", "us", or "our"), in 
 ## 1. Information We Collect
 - **Account information** you provide: name, email address, and optionally phone number, mailing address, and organization.
 - **Content you submit**: funding requests (which may include coach and parent names and emails and participant counts), volunteer sign-ups, meeting materials, and images you upload.
+- **Fundraising order information**: when you place an order in one of our fundraising sales (for example mulch, t-shirts, or raffle tickets), we collect your name, contact information, delivery or pickup address, the items ordered, and payment status. This information is visible only to authorized fundraising volunteers and administrators who organize the sale and deliveries.
+- **Committee and leadership information**: if you serve on a Booster Club committee or in a leadership position, your name and position may be listed publicly on the Service.
 - **Donation information**: amount, designation, and a payment confirmation from our payment processor (PayPal). We do **not** collect or store your full payment card number.
 - **Interest and preference settings**, such as email opt-in and selected interests.
 - **Technical data** collected automatically, such as device/browser type and app usage, and local storage used to keep you signed in and remember preferences.
@@ -707,11 +709,12 @@ This Privacy Policy explains how [LEGAL ENTITY NAME] ("we", "us", or "our"), in 
 ## 3. How We Share Information
 We do **not** sell your personal information. We share it only:
 - **With service providers** that operate the Service on our behalf — for example, Google Firebase (hosting, authentication, database, and storage) and PayPal (payment processing) — under their terms and privacy policies.
+- **With public data services** used for a specific feature: when an administrator enters an event street address, it may be sent to the U.S. Census Bureau geocoding service to look up map coordinates. Only the event address is sent — never your account information.
 - **For legal reasons**, if required by law or to protect rights, safety, or the integrity of the Service.
 - **With your direction or consent**, for example content you choose to make publicly visible.
 
 ## 4. Public Content
-Some content is publicly visible by design (for example, events, sponsor listings, gallery images, and the content of published policies). Do not submit information you do not want to be public in those areas.
+Some content is publicly visible by design (for example, events, sponsor listings, gallery images marked public, committee and leadership rosters, and the content of published policies). Do not submit information you do not want to be public in those areas.
 
 ## 5. Data Retention
 We keep personal information for as long as your account is active or as needed to provide the Service, comply with legal obligations, resolve disputes, and enforce agreements. You may request deletion as described below.

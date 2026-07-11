@@ -1,8 +1,10 @@
 rules_version = '2';
 
-// Storage rules for meeting-minutes PDFs.
-// Minutes are publicly readable; only Contributors and content managers may
-// upload, and only PDFs up to 20 MB.
+// Cloud Storage upload rules. Three folders are in use:
+//   /minutes  - meeting-minutes PDFs (public read; Contributor+ write, <=20 MB)
+//   /funding  - photos attached to funding requests (any signed-in user, <=10 MB)
+//   /gallery  - shared media library images (any signed-in user, <=10 MB)
+// Everything else in the bucket is implicitly denied (no matching rule).
 service firebase.storage {
   match /b/{bucket}/o {
     function role() {

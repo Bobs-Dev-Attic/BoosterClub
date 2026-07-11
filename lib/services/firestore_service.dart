@@ -13,6 +13,29 @@ import '../models/donation.dart';
 
 /// Abstracts reads/writes for all content collections. Backed by Cloud
 /// Firestore in production, or an in-memory store when [AppConfig.demoMode].
+///
+/// ## Recipe: adding a new content type
+///
+/// Most features follow the same five steps — grep for `committees` to see a
+/// complete, recent example of each one:
+///
+///  1. **Model** (lib/models/content_models.dart): a class implementing
+///     [ContentItem] with `fromDoc` (Firestore map → object) and `toMap`
+///     (object → Firestore map).
+///  2. **Stream** (this file): a one-liner like
+///     `Stream<List<Foo>> foos() => _stream('foos', Foo.fromDoc);`
+///     plus a `_demo['foos'] = …` line in [_seedDemo] and a loop in
+///     [seedSampleData] so demo mode and "Load sample content" work.
+///  3. **Security rule** (firestore.rules): a `match /foos/{doc}` block saying
+///     who may read/write. Nothing is accessible until a rule allows it.
+///  4. **Permission** (lib/models/permissions.dart) if admins manage it, and a
+///     tab in lib/screens/admin/admin_screen.dart gated by that permission.
+///  5. **Screen/editor**: a public screen reading the stream via
+///     `StreamListView`, and an editor dialog in
+///     lib/screens/admin/content_forms.dart returning the edited model.
+///
+/// Writes go through [upsert]/[delete], which handle both demo mode and
+/// Firestore, so screens never need to branch on [AppConfig.demoMode].
 class FirestoreService {
   FirestoreService() {
     if (AppConfig.demoMode) _seedDemo();

@@ -9,6 +9,12 @@
 // Until real values are supplied, `DefaultFirebaseOptions.isConfigured` returns
 // false and the app boots into an in-memory DEMO MODE so it can be previewed
 // without a backend. See lib/config/app_config.dart.
+//
+// SECURITY NOTE: the apiKey/appId values in this file are PUBLIC identifiers,
+// not secrets — every Firebase web app ships them to the browser, and they are
+// safe to commit. What actually protects the data is firestore.rules and
+// storage.rules. Real secrets (the CI deploy key, PayPal secret) live in
+// GitHub Actions secrets and Cloud Functions secrets — never in this repo.
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
