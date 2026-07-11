@@ -48,3 +48,10 @@ functions/.env
 
 # Claude Code local settings (machine-specific)
 .claude/settings.local.json
+
+# Security-rules test project & emulator artifacts
+firestore-tests/node_modules/
+functions/node_modules/
+**/firebase-debug.log
+**/firestore-debug.log
+**/*-debug.log

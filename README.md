@@ -261,10 +261,30 @@ flutter test
 flutter build web --release --no-tree-shake-icons --pwa-strategy=none
 ```
 
+### Security tests (rules + Functions)
+
+The authorization model is covered by automated tests so a rules change can't
+silently open up PII or privilege escalation. They run in CI (see below) and
+locally:
+
+```bash
+# Cloud Functions helper unit tests (no emulator needed)
+cd functions && node --test
+
+# Firestore + Storage security-rules tests (needs Java + the Firebase emulator)
+cd firestore-tests && npm install && npm test
+```
+
+`firestore-tests/` spins up the Firestore & Storage emulators and asserts
+allow/deny for each role, delegated grant, and the privacy-sensitive
+collections (funding requests, gallery visibility, QR sessions, donations, …).
+
 ## ⚙️ Continuous deployment (no local commands)
 
-`.github/workflows/deploy.yml` runs **analyze + test + build** on every pull request,
-and on every push to `main` additionally deploys:
+`.github/workflows/deploy.yml` runs **analyze + test + build** and a
+**`security-tests`** job (Cloud Functions unit tests + Firestore/Storage
+security-rules tests on the emulators) on every pull request. On every push to
+`main`, once both pass, it additionally deploys:
 
 1. the web build to **Firebase Hosting**,
 2. the **Storage CORS** policy (`cors.json`),

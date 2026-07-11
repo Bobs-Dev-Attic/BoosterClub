@@ -3,6 +3,21 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.3
+- **Security tests in CI** (repo review item #5). Added automated tests that
+  guard the authorization model so a future change can't silently open up PII
+  or privilege escalation:
+  - **Firestore & Storage security-rules tests** (`firestore-tests/`, 17 cases)
+    run against the Firebase emulators — covering role/grant permissions,
+    self-promotion/committee-self-assignment guards, funding-request privacy and
+    its manager-only PII subdoc, gallery public/hidden visibility and list
+    filtering, gallery upload gating, funding-photo read privacy, the
+    locked-down `qr_sessions` shape, and the server-controlled donation ledger.
+  - **Cloud Functions unit tests** for the QR helpers (secret hashing, TTL/expiry,
+    constant-time secret comparison), extracted into `functions/lib/qr.js`.
+  - A new **`security-tests` CI job** runs both on every PR and push, and the
+    deploy job now depends on it — so nothing ships if a rule regresses.
+
 ## 1.18.2
 - **Security: gallery & upload hardening** (repo review items #3 and #4).
   - **Uploads restricted** (item #3): gallery image uploads now require a

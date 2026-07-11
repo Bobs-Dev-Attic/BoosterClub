@@ -294,18 +294,9 @@ exports.paypalWebhook = onRequest(
 // Net effect: reading the public session doc reveals nothing usable, and the
 // token only ever reaches the browser that created the session.
 
-const crypto = require('crypto');
-const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-function sha256Hex(value) {
-  return crypto.createHash('sha256').update(String(value)).digest('hex');
-}
-
-function sessionAgeMs(data) {
-  const createdAt =
-    data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
-  return createdAt ? Date.now() - createdAt : 0;
-}
+// Pure helpers live in ./lib/qr so they can be unit-tested without the Admin
+// SDK. See functions/qr.test.js.
+const { SESSION_TTL_MS, isExpired, secretMatches } = require('./lib/qr');
 
 // Phone side: the already-signed-in user approves a scanned session. Records
 // the approval and the approving uid only — no token is created or stored.
@@ -330,7 +321,7 @@ exports.approveQrSignIn = onCall(async (request) => {
   if (data.status !== 'pending') {
     throw new HttpsError('failed-precondition', 'This request was already used.');
   }
-  if (sessionAgeMs(data) > SESSION_TTL_MS) {
+  if (isExpired(data)) {
     await ref.delete();
     throw new HttpsError('deadline-exceeded', 'This sign-in request expired.');
   }
@@ -365,17 +356,12 @@ exports.claimQrSignIn = onCall(async (request) => {
   }
   const data = snap.data();
 
-  // Constant-time-ish comparison of the secret hash before doing anything else.
-  const expected = data.secretHash || '';
-  const provided = sha256Hex(secret);
-  const ok =
-    expected.length === provided.length &&
-    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(provided));
-  if (!ok) {
+  // Constant-time comparison of the secret hash before doing anything else.
+  if (!secretMatches(data.secretHash, secret)) {
     throw new HttpsError('permission-denied', 'Invalid session secret.');
   }
 
-  if (sessionAgeMs(data) > SESSION_TTL_MS) {
+  if (isExpired(data)) {
     await ref.delete();
     throw new HttpsError('deadline-exceeded', 'This sign-in request expired.');
   }
