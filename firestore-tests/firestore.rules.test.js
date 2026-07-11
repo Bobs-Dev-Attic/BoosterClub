@@ -109,9 +109,16 @@ test('users: owner can edit profile but not role/grants', async () => {
 test('users: only manage_users may change another user role', async () => {
   await seedUser('alice', 'member');
   await seedUser('boss', 'webAdmin');
-  await assertFails(updateDoc(doc(db('alice'), 'users/boss'), { role: 'member' }));
+  // Use setDoc(merge) rather than updateDoc so the assertion tests the write
+  // *rule* only — updateDoc additionally requires the target doc to already be
+  // visible, which under the emulator can intermittently NOT_FOUND right after
+  // seeding and produce a flaky failure.
+  await assertFails(
+    setDoc(doc(db('alice'), 'users/boss'), { role: 'member' }, { merge: true }),
+  );
   await assertSucceeds(
-    updateDoc(doc(db('boss'), 'users/alice'), { role: 'contributor' }),
+    setDoc(doc(db('boss'), 'users/alice'), { role: 'contributor' },
+      { merge: true }),
   );
 });
 
