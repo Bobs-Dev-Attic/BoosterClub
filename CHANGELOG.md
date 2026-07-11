@@ -3,6 +3,17 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.5
+- **Admin Dashboard reorganized into categories with flyout menus.** The single
+  long row of section tabs (Events, Volunteering, Sponsors, …) is now grouped
+  into three flyout menus — **Content & Engagement** (Events, Volunteering, FAQ,
+  Gallery, History), **Fundraising & Finance** (Sponsors, Funding, Fundraisers,
+  Fundraising, Donations) and **Organization** (Meetings, Committees, Legal,
+  Users & Roles, Audit Log). Tapping a category opens a menu of its related
+  sections; the active category is highlighted, the current section is ticked in
+  the menu and named in a breadcrumb below. Categories and their items still
+  respect each manager's permissions, so only accessible sections appear.
+
 ## 1.18.4
 - **FAQ page content.** Replaced the placeholder FAQs with the Booster Club's
   real questions and answers — what the club is, how it raises money (membership,
