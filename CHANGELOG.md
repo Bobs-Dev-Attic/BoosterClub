@@ -3,6 +3,21 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.2
+- **Security: gallery & upload hardening** (repo review items #3 and #4).
+  - **Uploads restricted** (item #3): gallery image uploads now require a
+    gallery-manager base role (Contributor/Administrator/Web Admin) instead of
+    any signed-in user, so a random account can't drop a public-URL image into
+    the bucket. Funding-photo reads now require sign-in (funding requests aren't
+    public), matching item #2.
+  - **Hidden gallery images are now private at the API** (item #4): previously
+    a "hidden" image was only filtered in the UI but its Firestore document was
+    still world-readable. The gallery read rule now returns only `public == true`
+    images to non-managers; the public Gallery page queries public images
+    server-side. Legacy images created before the visibility flag existed are
+    automatically backfilled to public the first time a manager opens the
+    Gallery admin.
+
 ## 1.18.1
 - **Security: funding requests are no longer publicly readable** (repo review
   item #2). The `funding_requests` collection was world-readable, exposing

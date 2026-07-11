@@ -38,6 +38,14 @@ class _GalleryAdminState extends State<GalleryAdmin> {
   int _columns = 0; // 0 = auto (fit to width); otherwise fixed column count
   final Set<String> _selected = {};
 
+  @override
+  void initState() {
+    super.initState();
+    // Backfill the `public` flag on any legacy images so the (now server-side)
+    // public filter keeps showing them. No-op once every image has the flag.
+    widget.fs.ensureGalleryPublicFlags();
+  }
+
   List<GalleryImage> _sorted(List<GalleryImage> items) {
     final list = List<GalleryImage>.of(items);
     int cmpDate(GalleryImage a, GalleryImage b) =>

@@ -84,7 +84,14 @@ service cloud.firestore {
     match /faqs/{doc}          { allow read: if true; allow write: if hasPerm('manage_faqs'); }
     match /committees/{doc}    { allow read: if true; allow write: if hasPerm('manage_committees'); }
     match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
-    match /gallery/{doc}       { allow read: if true; allow write: if hasPerm('manage_gallery'); }
+    // Gallery images: only those marked public are world-readable; hidden ones
+    // are visible only to gallery managers. A guest/member LIST query must be
+    // constrained to `where('public', isEqualTo: true)` (see galleryPublic());
+    // managers list all via the manage_gallery branch.
+    match /gallery/{doc} {
+      allow read: if resource.data.public == true || hasPerm('manage_gallery');
+      allow write: if hasPerm('manage_gallery');
+    }
     match /legal_documents/{doc} { allow read: if true; allow write: if hasPerm('manage_legal'); }
 
     // ---- Fundraising campaigns & orders --------------------------------

@@ -2,8 +2,8 @@ rules_version = '2';
 
 // Cloud Storage upload rules. Three folders are in use:
 //   /minutes  - meeting-minutes PDFs (public read; Contributor+ write, <=20 MB)
-//   /funding  - photos attached to funding requests (any signed-in user, <=10 MB)
-//   /gallery  - shared media library images (any signed-in user, <=10 MB)
+//   /funding  - photos attached to funding requests (signed-in read/write, <=10 MB)
+//   /gallery  - shared media library images (public read; gallery managers write)
 // Everything else in the bucket is implicitly denied (no matching rule).
 service firebase.storage {
   match /b/{bucket}/o {
@@ -20,24 +20,27 @@ service firebase.storage {
         && request.resource.contentType == 'application/pdf';
     }
 
-    // Photos attached to funding requests: any signed-in member may upload an
-    // image up to 10 MB.
+    // Photos attached to funding requests. Funding requests are not public
+    // (see firestore.rules), so their photos aren't either: reads require
+    // sign-in. Any signed-in member may upload an image up to 10 MB.
     match /funding/{file} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if request.auth != null
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
 
-    // Shared media library: publicly readable. Any signed-in user may upload an
-    // image up to 10 MB (same as funding photos). Who can actually *publish* a
-    // gallery entry is gated separately by the Firestore `gallery` collection
-    // rule (manage_gallery) — an uploaded file that isn't referenced by a
-    // gallery document is never surfaced in the app. This avoids a cross-service
-    // role() lookup that was denying legitimate Contributor uploads.
+    // Shared media library. Published images are publicly readable (the public
+    // Gallery page shows them to guests). UPLOADS are restricted to gallery
+    // managers by base role — the same roles that hold manage_gallery by
+    // default and that the Gallery admin UI is shown to — so a random signed-in
+    // user can't drop a public-URL image into the bucket. (Managers who hold
+    // manage_gallery only via a delegated grant should upload from an account
+    // whose base role is Contributor or above; Storage rules can't see
+    // delegated grants.)
     match /gallery/{file} {
       allow read: if true;
-      allow write: if request.auth != null
+      allow write: if role() in ['contributor', 'administrator', 'webAdmin']
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
