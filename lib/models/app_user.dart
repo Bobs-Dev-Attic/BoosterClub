@@ -120,9 +120,6 @@ class AppUser {
   /// means "no expiry"). Only active (non-expired) grants take effect.
   final Map<String, DateTime> grants;
 
-  /// Ids of the committees this member belongs to (set by a Web Admin).
-  final List<String> committees;
-
   const AppUser({
     required this.uid,
     required this.email,
@@ -136,7 +133,6 @@ class AppUser {
     this.emailOptIn = true,
     this.interests = const [],
     this.grants = const {},
-    this.committees = const [],
   });
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> data) {
@@ -157,7 +153,6 @@ class AppUser {
           if (e.value is Timestamp)
             e.key as String: (e.value as Timestamp).toDate(),
       },
-      committees: List<String>.from(data['committees'] as List? ?? const []),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -176,7 +171,6 @@ class AppUser {
       'grants': {
         for (final e in grants.entries) e.key: Timestamp.fromDate(e.value),
       },
-      'committees': committees,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
@@ -215,7 +209,6 @@ class AppUser {
     bool? emailOptIn,
     List<String>? interests,
     Map<String, DateTime>? grants,
-    List<String>? committees,
   }) {
     return AppUser(
       uid: uid,
@@ -229,7 +222,6 @@ class AppUser {
       emailOptIn: emailOptIn ?? this.emailOptIn,
       interests: interests ?? this.interests,
       grants: grants ?? this.grants,
-      committees: committees ?? this.committees,
       createdAt: createdAt,
     );
   }

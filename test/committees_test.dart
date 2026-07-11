@@ -2,51 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:booster_club/config/app_config.dart';
-import 'package:booster_club/models/app_user.dart';
 import 'package:booster_club/models/content_models.dart';
 import 'package:booster_club/services/firestore_service.dart';
 import 'package:booster_club/screens/committees_screen.dart';
 
 void main() {
-  test('Committee round-trips roles, sections, category and positions', () {
+  test('Committee round-trips roles, sections and category', () {
     final c = Committee.fromDoc('c', {
       'title': 'Concessions',
-      'teamRoles': ['A', 'B'],
+      'roles': [
+        {'id': 'chair', 'title': 'Chair'},
+        {'id': 'vol', 'title': 'Volunteer Coordinator'},
+      ],
       'sections': [
         {'heading': 'Outdoor', 'body': '2 adults'}
       ],
       'category': 'leadership',
-      'positions': [
-        {'title': 'Chair', 'holder': 'Dawn Harris'},
-        {'title': 'Commissioner', 'holder': 'OPEN'},
-        {'title': 'Empty', 'holder': ''},
-      ],
       'order': 1,
     });
-    expect(c.teamRoles, ['A', 'B']);
+    expect(c.roles.map((r) => r.title), ['Chair', 'Volunteer Coordinator']);
+    expect(c.roleById('vol')?.title, 'Volunteer Coordinator');
+    expect(c.roleById('missing'), isNull);
     expect(c.sections.single.heading, 'Outdoor');
     expect(c.isLeadership, isTrue);
-    expect(c.positions.length, 3);
-    // open = blank holder or literal "OPEN"
-    expect(c.openPositions.map((p) => p.title), ['Commissioner', 'Empty']);
     final map = c.toMap();
     expect(map['category'], 'leadership');
-    expect((map['positions'] as List).first['holder'], 'Dawn Harris');
+    expect((map['roles'] as List).first['id'], 'chair');
   });
 
-  test('AppUser round-trips committee memberships', () {
-    final u = AppUser.fromMap('u', {
-      'email': 'x@y.z',
-      'displayName': 'X',
-      'role': 'member',
-      'committees': ['lead_exec', 'com_concessions'],
+  test('CommitteeMember round-trips and builds a deterministic id', () {
+    expect(CommitteeMember.idFor('com_x', 'user_y'), 'com_x__user_y');
+    final m = CommitteeMember.fromDoc('com_x__user_y', {
+      'committeeId': 'com_x',
+      'userId': 'user_y',
+      'userName': 'Jane Doe',
+      'roleIds': ['chair', 'vol'],
     });
-    expect(u.committees, ['lead_exec', 'com_concessions']);
-    expect(u.toMap()['committees'], ['lead_exec', 'com_concessions']);
-    expect(u.copyWith(committees: ['a']).committees, ['a']);
+    expect(m.committeeId, 'com_x');
+    expect(m.roleIds, ['chair', 'vol']);
+    expect(m.copyWith(roleIds: ['chair']).roleIds, ['chair']);
+    expect(m.toMap()['userName'], 'Jane Doe');
   });
 
-  testWidgets('Leadership & Committees page renders groups, holders and open',
+  test('Team and TeamMember round-trip', () {
+    final t = Team.fromDoc('t', {
+      'title': 'Events Crew',
+      'description': 'Runs events',
+      'order': 2,
+    });
+    expect(t.title, 'Events Crew');
+    expect(t.toMap()['order'], 2);
+
+    expect(TeamMember.idFor('t', 'u'), 't__u');
+    final tm = TeamMember.fromDoc('t__u', {
+      'teamId': 't',
+      'userId': 'u',
+      'userName': 'Sam',
+    });
+    expect(tm.teamId, 't');
+    expect(tm.userName, 'Sam');
+  });
+
+  testWidgets('Leadership & Committees page renders groups, members and open',
       (tester) async {
     AppConfig.demoMode = true;
     tester.view.physicalSize = const Size(1400, 4200);
@@ -61,13 +78,13 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    // Leadership group + a holder name (rendered in a rich-text position line).
+    // Leadership group + an assigned member (Alex Admin is seeded as President).
     expect(find.text('Executive Committee'), findsOneWidget);
-    expect(find.textContaining('Mary Bittle Koenick'), findsWidgets);
+    expect(find.textContaining('Alex Admin'), findsWidgets);
     // Working committee still renders with its contact email.
     expect(find.text('Concessions'), findsOneWidget);
     expect(find.text('wjmulchsale@gmail.com'), findsOneWidget);
-    // The open-positions call-out appears (there are OPEN chairs in the seed).
-    expect(find.textContaining('Open positions'), findsOneWidget);
+    // The open-roles call-out appears (there are unassigned roles in the seed).
+    expect(find.textContaining('Open roles'), findsOneWidget);
   });
 }

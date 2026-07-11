@@ -68,4 +68,34 @@ void main() {
     // Events panel is torn down when we switch away.
     expect(find.byType(AdminScreen), findsOneWidget);
   });
+
+  testWidgets('Organization category exposes Committees and a Teams section',
+      (tester) async {
+    await _pumpAdmin(tester);
+
+    // Committees section has a per-row "Manage members" action.
+    await tester.tap(find.text('Organization'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Committees').last);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Concessions'), findsWidgets);
+    expect(find.text('Members'), findsWidgets); // manage-members buttons
+
+    // Opening the members manager lists a seeded committee member.
+    await tester.tap(find.text('Members').first);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Members — '), findsOneWidget);
+    expect(find.text('Add member'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+
+    // Teams is its own section under Organization and lists seeded teams.
+    await tester.tap(find.text('Organization'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Teams').last);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Events Crew'), findsOneWidget);
+  });
 }

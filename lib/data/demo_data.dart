@@ -347,16 +347,16 @@ class DemoData {
           title: 'Executive Committee',
           category: CommitteeCategory.leadership,
           order: 1,
-          positions: [
-            CommitteePosition(title: 'President', holder: 'Mary Bittle Koenick'),
-            CommitteePosition(title: 'Vice President', holder: 'Sarah Allison'),
-            CommitteePosition(title: 'Secretary', holder: 'Sara Williams'),
-            CommitteePosition(title: 'Treasurer', holder: 'Anna Park'),
-            CommitteePosition(
-                title: 'WJ Athletic Specialist', holder: 'Larry A Hurd Jr'),
-            CommitteePosition(
-                title: 'Assistant Principal & Booster Club Liaison',
-                holder: 'Terry Heintze'),
+          roles: [
+            CommitteeRole(id: 'exec_president', title: 'President'),
+            CommitteeRole(id: 'exec_vp', title: 'Vice President'),
+            CommitteeRole(id: 'exec_secretary', title: 'Secretary'),
+            CommitteeRole(id: 'exec_treasurer', title: 'Treasurer'),
+            CommitteeRole(
+                id: 'exec_athletic', title: 'WJ Athletic Specialist'),
+            CommitteeRole(
+                id: 'exec_liaison',
+                title: 'Assistant Principal & Booster Club Liaison'),
           ],
         ),
         Committee(
@@ -364,25 +364,23 @@ class DemoData {
           title: 'Committee Chairs',
           category: CommitteeCategory.leadership,
           order: 2,
-          positions: [
-            CommitteePosition(
-                title: 'Corporate Banners & Sponsorships',
-                holder: 'Kara Kehoe'),
-            CommitteePosition(
-                title: 'Commissioner (Clubs)', holder: 'Michelle Reid'),
-            CommitteePosition(
-                title: 'Commissioner (Sports)', holder: 'OPEN'),
-            CommitteePosition(title: 'Concessions', holder: 'Dawn Harris'),
-            CommitteePosition(
-                title: 'Mulch Sale', holder: 'Mary Bittle Koenick'),
-            CommitteePosition(
-                title: 'Used Book Sale', holder: 'Natalie Shelton'),
-            CommitteePosition(title: 'Newsletter', holder: 'OPEN'),
-            CommitteePosition(
-                title: 'Parent Coordinator', holder: 'Howard Mann'),
-            CommitteePosition(title: 'School Store', holder: 'Becky Sher'),
-            CommitteePosition(title: 'Social Media', holder: 'OPEN'),
-            CommitteePosition(title: 'Website', holder: 'Jennifer Dooren'),
+          roles: [
+            CommitteeRole(
+                id: 'chair_banners',
+                title: 'Corporate Banners & Sponsorships'),
+            CommitteeRole(
+                id: 'chair_clubs', title: 'Commissioner (Clubs)'),
+            CommitteeRole(
+                id: 'chair_sports', title: 'Commissioner (Sports)'),
+            CommitteeRole(id: 'chair_concessions', title: 'Concessions'),
+            CommitteeRole(id: 'chair_mulch', title: 'Mulch Sale'),
+            CommitteeRole(id: 'chair_books', title: 'Used Book Sale'),
+            CommitteeRole(id: 'chair_newsletter', title: 'Newsletter'),
+            CommitteeRole(
+                id: 'chair_parent', title: 'Parent Coordinator'),
+            CommitteeRole(id: 'chair_store', title: 'School Store'),
+            CommitteeRole(id: 'chair_social', title: 'Social Media'),
+            CommitteeRole(id: 'chair_website', title: 'Website'),
           ],
         ),
         Committee(
@@ -390,12 +388,11 @@ class DemoData {
           title: 'Class Chairs',
           category: CommitteeCategory.leadership,
           order: 3,
-          positions: [
-            CommitteePosition(title: '9th Grade', holder: 'Howard Mann'),
-            CommitteePosition(title: '10th Grade', holder: 'Meghan Zampardi'),
-            CommitteePosition(title: '11th Grade', holder: 'Howard Mann'),
-            CommitteePosition(
-                title: '12th Grade', holder: 'Debbie Berger, Cheryl Hughes'),
+          roles: [
+            CommitteeRole(id: 'class_9', title: '9th Grade'),
+            CommitteeRole(id: 'class_10', title: '10th Grade'),
+            CommitteeRole(id: 'class_11', title: '11th Grade'),
+            CommitteeRole(id: 'class_12', title: '12th Grade'),
           ],
         ),
         // ---- Working committees ----
@@ -403,15 +400,19 @@ class DemoData {
           id: 'com_concessions',
           title: 'Concessions',
           order: 11,
-          positions: [CommitteePosition(title: 'Chair', holder: 'Dawn Harris')],
           description:
               'Clubs and teams run concession stands during events hosted at WJ.',
-          teamRoles: [
-            'Scheduling Coordinator',
-            'Event Staffing Coordinator',
-            'Pizza Delivery Coordinator',
-            'Restock/Shopping',
-            'Volunteer Coordinator',
+          roles: [
+            CommitteeRole(id: 'conc_chair', title: 'Chair'),
+            CommitteeRole(
+                id: 'conc_scheduling', title: 'Scheduling Coordinator'),
+            CommitteeRole(
+                id: 'conc_staffing', title: 'Event Staffing Coordinator'),
+            CommitteeRole(
+                id: 'conc_pizza', title: 'Pizza Delivery Coordinator'),
+            CommitteeRole(id: 'conc_restock', title: 'Restock/Shopping'),
+            CommitteeRole(
+                id: 'conc_volunteers', title: 'Volunteer Coordinator'),
           ],
           sections: [
             CommitteeSection(
@@ -427,11 +428,12 @@ class DemoData {
           id: 'com_school_store',
           title: 'School Store',
           order: 12,
-          positions: [CommitteePosition(title: 'Chair', holder: 'Becky Sher')],
-          teamRoles: [
-            'Design/Production',
-            'Finance',
-            'Volunteer Scheduling',
+          roles: [
+            CommitteeRole(id: 'store_chair', title: 'Chair'),
+            CommitteeRole(id: 'store_design', title: 'Design/Production'),
+            CommitteeRole(id: 'store_finance', title: 'Finance'),
+            CommitteeRole(
+                id: 'store_scheduling', title: 'Volunteer Scheduling'),
           ],
           sections: [
             CommitteeSection(
@@ -450,20 +452,20 @@ class DemoData {
           id: 'com_mulch',
           title: 'Mulch Sale Fundraiser',
           order: 13,
-          positions: [
-            CommitteePosition(title: 'Chair', holder: 'Mary Bittle Koenick')
-          ],
           schedule: 'The mulch sale is held annually in mid-to-late March.',
-          teamRoles: [
-            'Chair/Co-Chair',
-            'Mulch Supplier Coordinator',
-            'Truck & Forklift Rentals',
-            'Fork Lift Drivers',
-            'Food & Drink Coordinator',
-            'Order Dispatch & Routes',
-            'Student Check-in & SSL Coordinator',
-            'T-shirt Design/Sponsorships',
-            'Yard Sign Coordinators',
+          roles: [
+            CommitteeRole(id: 'mulch_chair', title: 'Chair/Co-Chair'),
+            CommitteeRole(
+                id: 'mulch_supplier', title: 'Mulch Supplier Coordinator'),
+            CommitteeRole(
+                id: 'mulch_rentals', title: 'Truck & Forklift Rentals'),
+            CommitteeRole(id: 'mulch_drivers', title: 'Fork Lift Drivers'),
+            CommitteeRole(id: 'mulch_food', title: 'Food & Drink Coordinator'),
+            CommitteeRole(id: 'mulch_dispatch', title: 'Order Dispatch & Routes'),
+            CommitteeRole(
+                id: 'mulch_ssl', title: 'Student Check-in & SSL Coordinator'),
+            CommitteeRole(id: 'mulch_tshirt', title: 'T-shirt Design/Sponsorships'),
+            CommitteeRole(id: 'mulch_signs', title: 'Yard Sign Coordinators'),
           ],
           highlight:
               'ADULT DRIVERS REQUIRED — Students deliver but adults MUST drive '
@@ -474,19 +476,17 @@ class DemoData {
           id: 'com_book_sale',
           title: 'Used Book Sale Fundraiser',
           order: 14,
-          positions: [
-            CommitteePosition(title: 'Chair', holder: 'Natalie Shelton')
-          ],
           schedule:
               'Used Book Sale is held annually late February to early March.',
-          teamRoles: [
-            'Chair/Co-Chair',
-            'Marketing',
-            'Operations/Logistics',
-            'Sorting Day Coordinators',
-            'SSL Coordinator',
-            'T-shirt Design/Sponsorships',
-            'Yard Sign Coordinators',
+          roles: [
+            CommitteeRole(id: 'book_chair', title: 'Chair/Co-Chair'),
+            CommitteeRole(id: 'book_marketing', title: 'Marketing'),
+            CommitteeRole(id: 'book_ops', title: 'Operations/Logistics'),
+            CommitteeRole(
+                id: 'book_sorting', title: 'Sorting Day Coordinators'),
+            CommitteeRole(id: 'book_ssl', title: 'SSL Coordinator'),
+            CommitteeRole(id: 'book_tshirt', title: 'T-shirt Design/Sponsorships'),
+            CommitteeRole(id: 'book_signs', title: 'Yard Sign Coordinators'),
           ],
           highlight:
               'LOTS of parent and student volunteers are needed to sort '
@@ -494,6 +494,69 @@ class DemoData {
               'January and February.',
           contactEmail: 'wjusedbooksale@gmail.com',
         ),
+      ];
+
+  /// Demo committee memberships (the join table). Maps the built-in demo users
+  /// to committees and roles so the roster and admin views have data.
+  static List<CommitteeMember> committeeMembers() => const [
+        CommitteeMember(
+            id: 'lead_exec__demo-admin',
+            committeeId: 'lead_exec',
+            userId: 'demo-admin',
+            userName: 'Alex Admin',
+            roleIds: ['exec_president']),
+        CommitteeMember(
+            id: 'com_concessions__demo-admin',
+            committeeId: 'com_concessions',
+            userId: 'demo-admin',
+            userName: 'Alex Admin',
+            roleIds: ['conc_chair']),
+        CommitteeMember(
+            id: 'com_concessions__demo-contrib',
+            committeeId: 'com_concessions',
+            userId: 'demo-contrib',
+            userName: 'Casey Contributor',
+            roleIds: ['conc_volunteers', 'conc_scheduling']),
+        CommitteeMember(
+            id: 'com_school_store__demo-member',
+            committeeId: 'com_school_store',
+            userId: 'demo-member',
+            userName: 'Morgan Member',
+            roleIds: ['store_design']),
+      ];
+
+  /// Demo teams — simple groupings of people, separate from committees.
+  static List<Team> teams() => const [
+        Team(
+            id: 'team_events',
+            title: 'Events Crew',
+            description:
+                'Sets up, staffs and breaks down school events and games.',
+            order: 1),
+        Team(
+            id: 'team_social',
+            title: 'Social Media Team',
+            description: 'Runs the club\'s Instagram, Facebook and newsletter.',
+            order: 2),
+      ];
+
+  /// Demo team memberships (the join table).
+  static List<TeamMember> teamMembers() => const [
+        TeamMember(
+            id: 'team_events__demo-admin',
+            teamId: 'team_events',
+            userId: 'demo-admin',
+            userName: 'Alex Admin'),
+        TeamMember(
+            id: 'team_events__demo-member',
+            teamId: 'team_events',
+            userId: 'demo-member',
+            userName: 'Morgan Member'),
+        TeamMember(
+            id: 'team_social__demo-contrib',
+            teamId: 'team_social',
+            userId: 'demo-contrib',
+            userName: 'Casey Contributor'),
       ];
 
   static List<LegalDocument> legalDocuments() => const [

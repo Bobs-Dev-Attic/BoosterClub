@@ -1127,24 +1127,24 @@ extension CommitteeCategoryX on CommitteeCategory {
           orElse: () => CommitteeCategory.committee);
 }
 
-/// A named position within a committee/leadership group and who holds it — e.g.
-/// "President → Mary Bittle Koenick" or "Commissioner (Sports) → OPEN".
-class CommitteePosition {
+/// A named role that a committee defines and can assign to one or more app
+/// users — e.g. "Chair", "Treasurer", "Volunteer Coordinator". Roles are stored
+/// on the committee document; the user⇄role assignments live in the separate
+/// `committee_members` collection (see [CommitteeMember]).
+///
+/// The [id] is stable and independent of the [title] so renaming a role doesn't
+/// orphan the memberships that reference it.
+class CommitteeRole {
+  final String id;
   final String title;
-  final String holder; // person's name; empty or "OPEN" means unfilled
-  const CommitteePosition({required this.title, this.holder = ''});
+  const CommitteeRole({required this.id, required this.title});
 
-  /// True when the position has no assigned person.
-  bool get isOpen =>
-      holder.trim().isEmpty || holder.trim().toUpperCase() == 'OPEN';
-
-  factory CommitteePosition.fromMap(Map<String, dynamic> d) =>
-      CommitteePosition(
+  factory CommitteeRole.fromMap(Map<String, dynamic> d) => CommitteeRole(
+        id: d['id'] ?? '',
         title: d['title'] ?? '',
-        holder: d['holder'] ?? '',
       );
 
-  Map<String, dynamic> toMap() => {'title': title, 'holder': holder};
+  Map<String, dynamic> toMap() => {'id': id, 'title': title};
 }
 
 class Committee implements ContentItem {
@@ -1159,8 +1159,9 @@ class Committee implements ContentItem {
   /// Intro paragraph.
   final String description;
 
-  /// The roles that make up the committee's team.
-  final List<String> teamRoles;
+  /// The roles this committee defines. Each can be assigned to one or more app
+  /// users via the `committee_members` join collection.
+  final List<CommitteeRole> roles;
 
   /// Optional detail sub-blocks.
   final List<CommitteeSection> sections;
@@ -1177,21 +1178,17 @@ class Committee implements ContentItem {
   /// Working committee vs. an organisation leadership group.
   final CommitteeCategory category;
 
-  /// Named positions and who holds them (Chair, President, class chair, …).
-  final List<CommitteePosition> positions;
-
   const Committee({
     required this.id,
     required this.title,
     this.schedule = '',
     this.description = '',
-    this.teamRoles = const [],
+    this.roles = const [],
     this.sections = const [],
     this.highlight = '',
     this.contactEmail = '',
     this.order = 0,
     this.category = CommitteeCategory.committee,
-    this.positions = const [],
   });
 
   @override
@@ -1199,16 +1196,23 @@ class Committee implements ContentItem {
 
   bool get isLeadership => category == CommitteeCategory.leadership;
 
-  /// Positions still needing someone.
-  List<CommitteePosition> get openPositions =>
-      positions.where((p) => p.isOpen).toList();
+  /// Looks up a role by id (returns null if it no longer exists).
+  CommitteeRole? roleById(String roleId) {
+    for (final r in roles) {
+      if (r.id == roleId) return r;
+    }
+    return null;
+  }
 
   factory Committee.fromDoc(String id, Map<String, dynamic> d) => Committee(
         id: id,
         title: d['title'] ?? '',
         schedule: d['schedule'] ?? '',
         description: d['description'] ?? '',
-        teamRoles: List<String>.from(d['teamRoles'] ?? const []),
+        roles: [
+          for (final r in (d['roles'] as List? ?? const []))
+            CommitteeRole.fromMap(Map<String, dynamic>.from(r as Map)),
+        ],
         sections: [
           for (final s in (d['sections'] as List? ?? const []))
             CommitteeSection.fromMap(Map<String, dynamic>.from(s as Map)),
@@ -1217,10 +1221,6 @@ class Committee implements ContentItem {
         contactEmail: d['contactEmail'] ?? '',
         order: (d['order'] as num?)?.toInt() ?? 0,
         category: CommitteeCategoryX.parse(d['category']),
-        positions: [
-          for (final p in (d['positions'] as List? ?? const []))
-            CommitteePosition.fromMap(Map<String, dynamic>.from(p as Map)),
-        ],
       );
 
   @override
@@ -1228,12 +1228,166 @@ class Committee implements ContentItem {
         'title': title,
         'schedule': schedule,
         'description': description,
-        'teamRoles': teamRoles,
+        'roles': [for (final r in roles) r.toMap()],
         'sections': [for (final s in sections) s.toMap()],
         'highlight': highlight,
         'contactEmail': contactEmail,
         'order': order,
         'category': category.name,
-        'positions': [for (final p in positions) p.toMap()],
+      };
+}
+
+/// A single membership record linking an app user to a committee, optionally
+/// carrying one or more of that committee's [CommitteeRole]s. This is the join
+/// table that replaced the old per-user list of committee ids.
+///
+/// The document id is the deterministic composite `"{committeeId}__{userId}"`
+/// so a user can appear at most once per committee, and re-adding them is
+/// idempotent.
+class CommitteeMember implements ContentItem {
+  @override
+  final String id;
+  final String committeeId;
+  final String userId;
+
+  /// The member's display name, denormalised so the public roster and admin
+  /// lists can render without a second lookup. (No email is stored here — the
+  /// roster is names-only, like the roster it replaced.)
+  final String userName;
+
+  /// Ids of the committee roles this member holds (may be empty — a plain
+  /// member with no specific role).
+  final List<String> roleIds;
+
+  final DateTime? createdAt;
+
+  const CommitteeMember({
+    required this.id,
+    required this.committeeId,
+    required this.userId,
+    required this.userName,
+    this.roleIds = const [],
+    this.createdAt,
+  });
+
+  /// Builds the deterministic membership id for a (committee, user) pair.
+  static String idFor(String committeeId, String userId) =>
+      '${committeeId}__$userId';
+
+  @override
+  String get title => userName;
+  @override
+  String get summary => roleIds.join(', ');
+
+  factory CommitteeMember.fromDoc(String id, Map<String, dynamic> d) =>
+      CommitteeMember(
+        id: id,
+        committeeId: d['committeeId'] ?? '',
+        userId: d['userId'] ?? '',
+        userName: d['userName'] ?? '',
+        roleIds: List<String>.from(d['roleIds'] ?? const []),
+        createdAt: _ts(d['createdAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'committeeId': committeeId,
+        'userId': userId,
+        'userName': userName,
+        'roleIds': roleIds,
+        'createdAt':
+            createdAt != null ? Timestamp.fromDate(createdAt!) : null,
+      };
+
+  CommitteeMember copyWith({List<String>? roleIds}) => CommitteeMember(
+        id: id,
+        committeeId: committeeId,
+        userId: userId,
+        userName: userName,
+        roleIds: roleIds ?? this.roleIds,
+        createdAt: createdAt,
+      );
+}
+
+/// A named team an app user can belong to. Simpler than a committee — a team is
+/// just a grouping of people (members live in the `team_members` collection).
+class Team implements ContentItem {
+  @override
+  final String id;
+  @override
+  final String title;
+  final String description;
+  final int order;
+  final DateTime? createdAt;
+
+  const Team({
+    required this.id,
+    required this.title,
+    this.description = '',
+    this.order = 0,
+    this.createdAt,
+  });
+
+  @override
+  String get summary => description;
+
+  factory Team.fromDoc(String id, Map<String, dynamic> d) => Team(
+        id: id,
+        title: d['title'] ?? '',
+        description: d['description'] ?? '',
+        order: (d['order'] as num?)?.toInt() ?? 0,
+        createdAt: _ts(d['createdAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'description': description,
+        'order': order,
+        'createdAt':
+            createdAt != null ? Timestamp.fromDate(createdAt!) : null,
+      };
+}
+
+/// A membership record linking an app user to a [Team]. Like [CommitteeMember]
+/// the id is the deterministic composite `"{teamId}__{userId}"`.
+class TeamMember implements ContentItem {
+  @override
+  final String id;
+  final String teamId;
+  final String userId;
+  final String userName;
+  final DateTime? createdAt;
+
+  const TeamMember({
+    required this.id,
+    required this.teamId,
+    required this.userId,
+    required this.userName,
+    this.createdAt,
+  });
+
+  static String idFor(String teamId, String userId) => '${teamId}__$userId';
+
+  @override
+  String get title => userName;
+  @override
+  String get summary => teamId;
+
+  factory TeamMember.fromDoc(String id, Map<String, dynamic> d) => TeamMember(
+        id: id,
+        teamId: d['teamId'] ?? '',
+        userId: d['userId'] ?? '',
+        userName: d['userName'] ?? '',
+        createdAt: _ts(d['createdAt']),
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'teamId': teamId,
+        'userId': userId,
+        'userName': userName,
+        'createdAt':
+            createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       };
 }

@@ -3,6 +3,28 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.6
+- **Committee membership moved to a join table; committee Roles; new Teams.**
+  Reworked how people relate to committees, and added Teams:
+  - **Committee membership is now a separate `committee_members` collection**
+    (the source of truth) instead of a list of committee ids stored on each user
+    profile. A user can belong to many committees, and each membership carries
+    the committee role(s) they hold.
+  - **Committees now define their own Roles** (created per committee) that are
+    assigned to real app users. The public "Leadership & Committees" page shows
+    each role with the member(s) who fill it, and lists unfilled roles as OPEN in
+    the "Open roles" call-out — replacing the old typed-in position roster.
+  - **New `teams` + `team_members` collections** — a lighter people-grouping. One
+    or more users can be a member of a team.
+  - **Dedicated management UI**: Admin → Committees gains a per-committee
+    *Members* manager (add/remove users, tick their roles); a new **Teams**
+    section (under Organization) manages teams and their members. Per-user
+    committee checkboxes were removed from Users & Roles.
+  - Account page now shows "My Committees & Teams" (with role names) read from the
+    join tables. Firestore rules added for the three new collections (public
+    committee roster; sign-in-gated teams; manager-only writes), covered by new
+    emulator rules tests.
+
 ## 1.18.5
 - **Admin Dashboard reorganized into categories with flyout menus.** The single
   long row of section tabs (Events, Volunteering, Sponsors, …) is now grouped

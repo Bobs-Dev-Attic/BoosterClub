@@ -1121,31 +1121,55 @@ Future<FaqItem?> editFaq(BuildContext context, FaqItem? q) {
   );
 }
 
+/// Turns a role title into a stable, url-safe id (e.g. "Vice President" →
+/// "vice_president"). Used when the admin adds a new role by name.
+String _roleSlug(String title) {
+  final s = title
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  return s.isEmpty ? 'role' : s;
+}
+
 Future<Committee?> editCommittee(BuildContext context, Committee? c) {
   final title = TextEditingController(text: c?.title);
   final order = TextEditingController(text: (c?.order ?? 0).toString());
   final schedule = TextEditingController(text: c?.schedule);
   final description = TextEditingController(text: c?.description);
-  final roles = TextEditingController(text: c?.teamRoles.join('\n'));
+  // Roles are edited one title per line. Members are assigned to these roles
+  // separately (Admin → Committees → Manage members).
+  final roles = TextEditingController(text: c?.roles.map((r) => r.title).join('\n'));
   final sections = TextEditingController(
     text: c?.sections
         .map((s) => s.body.isEmpty ? s.heading : '${s.heading} | ${s.body}')
-        .join('\n'),
-  );
-  final positions = TextEditingController(
-    text: c?.positions
-        .map((p) => p.holder.isEmpty ? p.title : '${p.title} | ${p.holder}')
         .join('\n'),
   );
   final highlight = TextEditingController(text: c?.highlight);
   final email = TextEditingController(text: c?.contactEmail);
   var category = c?.category ?? CommitteeCategory.committee;
 
-  List<String> parseRoles() => roles.text
-      .split('\n')
-      .map((r) => r.trim())
-      .where((r) => r.isNotEmpty)
-      .toList();
+  // Parse role titles into CommitteeRoles. Reuse the existing role's id when a
+  // title is unchanged so member assignments (which reference role ids) survive
+  // edits; assign a fresh slug (de-duplicated) to newly typed roles.
+  List<CommitteeRole> parseRoles() {
+    final existingByTitle = {for (final r in (c?.roles ?? const [])) r.title: r};
+    final used = <String>{};
+    final result = <CommitteeRole>[];
+    for (final line in roles.text.split('\n')) {
+      final t = line.trim();
+      if (t.isEmpty) continue;
+      var id = existingByTitle[t]?.id ?? _roleSlug(t);
+      var unique = id;
+      var n = 2;
+      while (used.contains(unique)) {
+        unique = '${id}_$n';
+        n++;
+      }
+      used.add(unique);
+      result.add(CommitteeRole(id: unique, title: t));
+    }
+    return result;
+  }
 
   List<CommitteeSection> parseSections() => sections.text
       .split('\n')
@@ -1157,20 +1181,6 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
         return CommitteeSection(
           heading: line.substring(0, i).trim(),
           body: line.substring(i + 1).trim(),
-        );
-      })
-      .toList();
-
-  List<CommitteePosition> parsePositions() => positions.text
-      .split('\n')
-      .map((line) => line.trim())
-      .where((line) => line.isNotEmpty)
-      .map((line) {
-        final i = line.indexOf('|');
-        if (i < 0) return CommitteePosition(title: line);
-        return CommitteePosition(
-          title: line.substring(0, i).trim(),
-          holder: line.substring(i + 1).trim(),
         );
       })
       .toList();
@@ -1207,10 +1217,11 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
               keyboardType: TextInputType.number),
           const SizedBox(height: 12),
           TextFormField(
-              controller: positions,
+              controller: roles,
               decoration: _dec(
-                  'Positions — one per line, "Title | Person" (blank or OPEN = open)'),
-              maxLines: 5),
+                  'Roles — one title per line. Assign people to roles under '
+                  '"Manage members".'),
+              maxLines: 6),
           const SizedBox(height: 12),
           TextFormField(
               controller: schedule,
@@ -1220,12 +1231,6 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
               controller: description,
               decoration: _dec('Intro description (optional)'),
               maxLines: 2),
-          const SizedBox(height: 12),
-          TextFormField(
-              controller: roles,
-              decoration:
-                  _dec('Team roles — one per line (optional)'),
-              maxLines: 5),
           const SizedBox(height: 12),
           TextFormField(
               controller: sections,
@@ -1248,13 +1253,56 @@ Future<Committee?> editCommittee(BuildContext context, Committee? c) {
               title: title.text.trim(),
               order: int.tryParse(order.text) ?? 0,
               category: category,
-              positions: parsePositions(),
+              roles: parseRoles(),
               schedule: schedule.text.trim(),
               description: description.text.trim(),
-              teamRoles: parseRoles(),
               sections: parseSections(),
               highlight: highlight.text.trim(),
               contactEmail: email.text.trim(),
+            )),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Editor dialog for a [Team] — just a name, description and display order.
+Future<Team?> editTeam(BuildContext context, Team? t) {
+  final title = TextEditingController(text: t?.title);
+  final description = TextEditingController(text: t?.description);
+  final order = TextEditingController(text: (t?.order ?? 0).toString());
+
+  return _formDialog<Team>(
+    context,
+    title: t == null ? 'New Team' : 'Edit Team',
+    build: (key, submit) => Form(
+      key: key,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+              controller: title,
+              decoration: _dec('Team name'),
+              validator: _required),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: description,
+              decoration: _dec('Description (optional)'),
+              maxLines: 2),
+          const SizedBox(height: 12),
+          TextFormField(
+              controller: order,
+              decoration: _dec('Display order'),
+              keyboardType: TextInputType.number),
+          _actions(
+            key,
+            () => submit(Team(
+              id: t?.id ?? 'new',
+              title: title.text.trim(),
+              description: description.text.trim(),
+              order: int.tryParse(order.text) ?? 0,
+              createdAt: t?.createdAt ?? DateTime.now(),
             )),
           ),
         ],

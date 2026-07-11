@@ -56,6 +56,9 @@ class FirestoreService {
     _demo['meetings'] = List.of(DemoData.meetings());
     _demo['faqs'] = List.of(DemoData.faqs());
     _demo['committees'] = List.of(DemoData.committees());
+    _demo['committee_members'] = List.of(DemoData.committeeMembers());
+    _demo['teams'] = List.of(DemoData.teams());
+    _demo['team_members'] = List.of(DemoData.teamMembers());
     _demo['history_facts'] = List.of(DemoData.historyFacts());
     _demo['gallery'] = List.of(DemoData.gallery());
     _demo['legal_documents'] = List.of(DemoData.legalDocuments());
@@ -129,6 +132,61 @@ class FirestoreService {
 
   Stream<List<Committee>> committees() =>
       _stream('committees', Committee.fromDoc, orderBy: 'order');
+
+  /// Every committee membership (join records). Callers filter by `committeeId`
+  /// (or `userId`) client-side — the set is small and this avoids per-committee
+  /// composite indexes.
+  Stream<List<CommitteeMember>> committeeMembers() =>
+      _stream('committee_members', CommitteeMember.fromDoc);
+
+  /// All teams, ordered for display.
+  Stream<List<Team>> teams() => _stream('teams', Team.fromDoc, orderBy: 'order');
+
+  /// Every team membership (join records). Callers filter by `teamId`.
+  Stream<List<TeamMember>> teamMembers() =>
+      _stream('team_members', TeamMember.fromDoc);
+
+  /// Adds a user to a committee (idempotent — the membership id is a
+  /// deterministic composite of committee + user, so re-adding just updates).
+  Future<void> addCommitteeMember(
+    Committee committee,
+    AppUser user, {
+    List<String> roleIds = const [],
+  }) =>
+      upsert(
+        'committee_members',
+        CommitteeMember(
+          id: CommitteeMember.idFor(committee.id, user.uid),
+          committeeId: committee.id,
+          userId: user.uid,
+          userName: user.displayName,
+          roleIds: roleIds,
+          createdAt: DateTime.now(),
+        ),
+      );
+
+  /// Replaces the set of roles a committee member holds.
+  Future<void> setCommitteeMemberRoles(
+          CommitteeMember member, List<String> roleIds) =>
+      upsert('committee_members', member.copyWith(roleIds: roleIds));
+
+  Future<void> removeCommitteeMember(CommitteeMember member) =>
+      delete('committee_members', member.id);
+
+  /// Adds a user to a team (idempotent — see [addCommitteeMember]).
+  Future<void> addTeamMember(Team team, AppUser user) => upsert(
+        'team_members',
+        TeamMember(
+          id: TeamMember.idFor(team.id, user.uid),
+          teamId: team.id,
+          userId: user.uid,
+          userName: user.displayName,
+          createdAt: DateTime.now(),
+        ),
+      );
+
+  Future<void> removeTeamMember(TeamMember member) =>
+      delete('team_members', member.id);
 
   Stream<List<HistoryFact>> historyFacts() =>
       _stream('history_facts', HistoryFact.fromDoc, orderBy: 'month');
@@ -316,6 +374,15 @@ class FirestoreService {
     for (final c in DemoData.committees()) {
       await upsert('committees', c);
     }
+    for (final m in DemoData.committeeMembers()) {
+      await upsert('committee_members', m);
+    }
+    for (final t in DemoData.teams()) {
+      await upsert('teams', t);
+    }
+    for (final m in DemoData.teamMembers()) {
+      await upsert('team_members', m);
+    }
     for (final h in DemoData.historyFacts()) {
       await upsert('history_facts', h);
     }
@@ -342,8 +409,7 @@ class FirestoreService {
         uid: 'demo-admin',
         email: 'admin@example.com',
         displayName: 'Alex Admin',
-        role: UserRole.webAdmin,
-        committees: ['lead_exec', 'com_concessions']),
+        role: UserRole.webAdmin),
     const AppUser(
         uid: 'demo-contrib',
         email: 'casey@example.com',
@@ -421,7 +487,6 @@ class FirestoreService {
         for (final e in updated.grants.entries)
           e.key: Timestamp.fromDate(e.value),
       },
-      'committees': updated.committees,
     }, SetOptions(merge: true));
     for (final a in actions) {
       await _db.collection('audit_log').add(AuditEntry(

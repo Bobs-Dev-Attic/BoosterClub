@@ -60,8 +60,7 @@ service cloud.firestore {
       // delegated grants (only a Web Admin can).
       allow update: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.role == resource.data.role
-        && request.resource.data.get('grants', {}) == resource.data.get('grants', {})
-        && request.resource.data.get('committees', []) == resource.data.get('committees', []);
+        && request.resource.data.get('grants', {}) == resource.data.get('grants', {});
       // Web Admins (manage_users) can manage any profile, roles and grants.
       allow read, write: if hasPerm('manage_users');
     }
@@ -83,6 +82,23 @@ service cloud.firestore {
     match /meetings/{doc}      { allow read: if true; allow write: if hasPerm('manage_meetings'); }
     match /faqs/{doc}          { allow read: if true; allow write: if hasPerm('manage_faqs'); }
     match /committees/{doc}    { allow read: if true; allow write: if hasPerm('manage_committees'); }
+    // Committee membership join table (user⇄committee, with role ids). The
+    // roster is public (names only, like the roster it replaced); only
+    // committee managers may change assignments.
+    match /committee_members/{doc} {
+      allow read: if true;
+      allow write: if hasPerm('manage_committees');
+    }
+    // Teams and their membership join table. Teams are an internal grouping, so
+    // reads require sign-in; committee managers administer them.
+    match /teams/{doc} {
+      allow read: if isSignedIn();
+      allow write: if hasPerm('manage_committees');
+    }
+    match /team_members/{doc} {
+      allow read: if isSignedIn();
+      allow write: if hasPerm('manage_committees');
+    }
     match /history_facts/{doc} { allow read: if true; allow write: if hasPerm('manage_history'); }
     // Gallery images: only those marked public are world-readable; hidden ones
     // are visible only to gallery managers. A guest/member LIST query must be
