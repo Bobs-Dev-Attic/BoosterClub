@@ -3,6 +3,13 @@
 Version shown in-app (nav footer) as `AppConfig.appVersion`, kept in step with
 `pubspec.yaml`. Bumped on each iteration.
 
+## 1.18.4
+- **FAQ page content.** Replaced the placeholder FAQs with the Booster Club's
+  real questions and answers — what the club is, how it raises money (membership,
+  fundraisers, school store & concessions), why to get involved, how clubs & teams
+  request funding, and examples of the groups supported. Added an
+  `info@wjboosterclub.org` contact prompt to the page header.
+
 ## 1.18.3
 - **Security tests in CI** (repo review item #5). Added automated tests that
   guard the authorization model so a future change can't silently open up PII

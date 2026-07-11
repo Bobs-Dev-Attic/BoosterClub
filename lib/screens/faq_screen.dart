@@ -19,7 +19,9 @@ class FaqScreen extends StatelessWidget {
           const SectionHeader(
             title: 'Frequently Asked Questions',
             icon: Icons.help,
-            subtitle: 'Answers to common questions about the Booster Club.',
+            subtitle:
+                'Answers to common questions about the Booster Club. Still have '
+                'a question? Email info@wjboosterclub.org.',
           ),
           StreamListView<FaqItem>(
             stream: fs.faqs(),
